@@ -241,7 +241,7 @@ jobs:
           printenv | grep -E 'DB_PORT|DB_SERVER|DB_NAME|DB_USER|DB_PASS|REST_HOST_ADDRESS|REST_PORT|FRONTEND_PORT|FRONTEND_HOST_ADDRESS|WEBDAV_HOST|WEBDAV_PORT|WEBDAV_TOKEN|COUCHDB_USER|COUCHDB_SERVER|COUCHDB_NAME|COUCHDB_PORT|COUCHDB_PASSWORD' > environment/.env.ci
 
       - name: Log in to Docker Hub
-        run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login ${{ secrets
+        run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login ${{ secrets.CI_REGISTRY }}
 
 
 
