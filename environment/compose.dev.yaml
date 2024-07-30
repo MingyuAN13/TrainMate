@@ -1,0 +1,121 @@
+services:
+  db:
+    image: postgres:14-alpine
+    container_name: db
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    restart: always
+    volumes:
+      - .db:/data/postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    extra_hosts:
+      - "127.0.0.1:127.0.0.1"
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
+  couch_db:
+    image: couchdb:3
+    container_name: couch_db
+    env_file:
+      - .env
+    ports:
+      - ${COUCHDB_PORT}:5984
+    restart: always
+    extra_hosts:
+      - "127.0.0.1:127.0.0.1"
+    volumes:
+      - ".data-couch:/couch_db/data"
+
+  webdav:
+    image: xama/nginx-webdav
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - ${WEBDAV_PORT}:8081
+    volumes:
+      - ./webdav/webdav:/var/webdav/public
+      - ./webdav/tokens:/etc/nginx/tokens
+      - ./webdav/nginx.conf:/etc/nginx/nginx.conf
+  rest:
+    restart: always
+    build:
+      context: ../rest_api/
+      dockerfile: Dockerfile.dev
+    image: trainmate-rest-api
+    container_name: trainmate-rest-api
+    ports:
+      - "${REST_PORT}:5002"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    links:
+      - db
+      - webdav
+      - couch_db
+    extra_hosts:
+      - "127.0.0.1:127.0.0.1"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f POST http://${REST_HOST_ADDRESS}:${REST_PORT}/api/health",
+        ]
+      interval: 20s
+      retries: 5
+      timeout: 5s
+      start_interval: 1s
+    volumes:
+      - ../rest_api:/app
+
+  frontend:
+    restart: always
+    env_file:
+      - .env
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.dev
+      args:
+        REST_HOST_ADDRESS: ${REST_HOST_ADDRESS}
+        REST_PORT: ${REST_PORT}
+    image: trainmate-frontend
+    container_name: trainmate-frontend
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    depends_on:
+      rest:
+        condition: service_healthy
+    links:
+      - rest
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://frontend:${FRONTEND_PORT}/login"]
+      interval: 20s
+      retries: 10
+      timeout: 5s
+      start_interval: 1s
+    extra_hosts:
+      - "127.0.0.1:127.0.0.1"
+    volumes:
+      - ../frontend/public:/app/public
+      - ../frontend/src:/app/src
+      - ../frontend/next-env.d.ts:/app/next-env.d.ts
+      - ../frontend/next.config.mjs:/app/next.config.mjs
+      - ../frontend/postcss.config.mjs:/app/postcss.config.mjs
+      - ../frontend/tailwind.config.ts:/app/tailwind.config.ts
+      - ../frontend/tsconfig.json:/app/tsconfig.json
+      - /app/node_modules
+
+networks:
+  default:
+    name: trainmate-network

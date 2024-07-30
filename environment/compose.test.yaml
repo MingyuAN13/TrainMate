@@ -1,0 +1,140 @@
+services:
+  db:
+    profiles: ["app", "cypress", "pytest"]
+    image: postgres:14-alpine
+    container_name: db
+    ports:
+      - ${DB_PORT}:${DB_PORT}
+    restart: always
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    extra_hosts:
+      - "127.0.0.1:127.0.0.1"
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
+  couch_db:
+    profiles: ["app", "cypress", "pytest"]
+    image: couchdb:3
+    container_name: couch_db
+    env_file:
+      - .env
+    ports:
+      - ${COUCHDB_PORT}:5984
+    restart: always
+    extra_hosts:
+      - "127.0.0.1:127.0.0.1"
+
+  webdav:
+    profiles: ["app", "cypress", "pytest"]
+    image: xama/nginx-webdav
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - ${WEBDAV_PORT}:8081
+    volumes:
+      - ./webdav/webdav:/var/webdav/public
+      - ./webdav/tokens:/etc/nginx/tokens
+      - ./webdav/nginx.conf:/etc/nginx/nginx.conf
+
+  rest:
+    profiles: ["app", "cypress"]
+    restart: always
+    build:
+      context: ../rest_api/
+      dockerfile: Dockerfile.prod
+    image: trainmate-rest-api-prod
+    container_name: trainmate-rest-api-prod
+    ports:
+      - "${REST_PORT}:5002"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    links:
+      - db
+      - webdav
+      - couch_db
+    extra_hosts:
+      - "127.0.0.1:127.0.0.1"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f POST http://rest:${REST_PORT}/api/health",
+        ]
+      interval: 1s
+      retries: 30
+      timeout: 10s
+
+  frontend:
+    profiles: ["app", "cypress"]
+    env_file:
+      - .env
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.prod
+      args:
+        REST_HOST_ADDRESS: ${REST_HOST_ADDRESS}
+        REST_PORT: ${REST_PORT}
+    image: trainmate-frontend-prod
+    container_name: trainmate-frontend-prod
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    depends_on:
+      rest:
+        condition: service_healthy
+    links:
+      - rest
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://frontend:${FRONTEND_PORT}/login"]
+      interval: 1s
+      retries: 30
+      timeout: 10s
+    extra_hosts:
+      - "127.0.0.1:127.0.0.1"
+
+  pytest:
+    profiles: ["pytest"]
+    build:
+      context: ../
+      dockerfile: rest_api_tests/Dockerfile
+    image: trainmate-rest-api-pytest
+    container_name: trainmate-rest-api-pytest
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    links:
+      - db
+      - webdav
+      - couch_db
+
+  cypress:
+    profiles: ["cypress"]
+    build: ../cypress
+    image: trainmate-cypress
+    container_name: trainmate-cypress
+    depends_on:
+      rest:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    links:
+      - rest
+      - frontend
+
+networks:
+  default:
+    name: trainmate-network

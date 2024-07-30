@@ -1,0 +1,203 @@
+stages:
+  - lint
+  - analyze
+  - validate
+  - build
+  - test
+
+workflow:
+  auto_cancel:
+    on_new_commit: conservative
+
+variables:
+  # CYPRESS_RECORD_KEY: "$CYPRESS_RECORD_KEY"
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: ""
+  DB_PORT: 5432
+  DB_SERVER: db
+  DB_NAME: trainmate_db
+  DB_USER: trainmate_user
+  DB_PASS: pass
+  REST_HOST_ADDRESS: rest
+  REST_PORT: 5002
+  FRONTEND_HOST_ADDRESS: frontend
+  FRONTEND_PORT: 3000
+  WEBDAV_HOST: http://webdav
+  WEBDAV_PORT: 8081
+  WEBDAV_TOKEN: Bearer testtoken
+  COUCHDB_USER: trainmate
+  COUCHDB_SERVER: couch_db
+  COUCHDB_NAME: trainmate_db
+  COUCHDB_PORT: 5984
+  COUCHDB_PASSWORD: pass
+
+
+.write-env-file: &write-env-file
+  - printenv | grep -E 'CI_REGISTRY_IMAGE|CI_COMMIT_REF_SLUG|DB_PORT|DB_SERVER|DB_NAME|DB_USER|DB_PASS|REST_HOST_ADDRESS|REST_PORT|FRONTEND_PORT|FRONTEND_HOST_ADDRESS|WEBDAV_HOST|WEBDAV_PORT|WEBDAV_TOKEN|COUCHDB_USER|COUCHDB_SERVER|COUCHDB_NAME|COUCHDB_PORT|COUCHDB_PASSWORD' > environment/.env.ci
+
+.login-docker: &login-docker
+  - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+
+lint-python:
+  stage: lint
+  interruptible: true
+  image: python:3.12.3-bookworm
+  script:
+    - pip install pylint
+    - pip install -r ./rest_api/requirements.txt
+    - pylint ./rest_api/
+    - pylint ./rest_api_tests
+
+lint-typescript:
+  stage: lint
+  interruptible: true
+  image: node:20
+  script:
+    - cd frontend
+    - npm i
+    - npm run lint
+
+analyze-code:
+  stage: analyze
+  interruptible: true
+  tags: [understand]
+  needs: []
+  artifacts:
+    paths:
+      - .ci/understand-settings.csv
+      - .ci/dependencies.csv
+    when: always
+  script:
+    - cd frontend
+    - npm i
+    - cd ..
+    - pip install -r ./rest_api/requirements.txt
+    - und -verbose analyze -db .ci/understand-settings.und
+      # ignore errors since it is not finding some dependencies files as they are ignored
+    - und -verbose metrics .ci/understand-settings.und || true
+    - und export -format longnoroot -dependencies file csv .ci/dependencies.csv .ci/understand-settings.und
+
+analyze-duplication:
+  stage: analyze
+  interruptible: true
+  image: amazoncorretto:17
+  needs: []
+  script:
+    - java -jar .ci/simian-4.0.0.jar -balanceParentheses -failOnDuplication -ignoreCharacterCase -ignoreCurlyBraces -ignoreIdentifierCase -ignoreModifiers -ignoreStringCase -threshold=6 -formatter="yaml" "./rest_api/*.py" "./frontend/src/*.ts" "./frontend/src/*.tsx"
+
+validate-analysis:
+  stage: validate
+  interruptible: true
+  image: rust
+  needs: [analyze-code]
+  script:
+    - cd .ci/understand-validator
+    - cargo run --release
+
+build-frontend:
+  stage: build
+  interruptible: true
+  image: docker
+  services:
+    - docker:dind
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/frontend:$CI_COMMIT_REF_SLUG
+  before_script:
+    - *write-env-file
+    - *login-docker
+  script:
+    - cd frontend
+    - docker pull $IMAGE_TAG || true
+    - docker build --build-arg REST_HOST_ADDRESS=$REST_HOST_ADDRESS --build-arg REST_PORT=$REST_PORT --build-arg NEXT_PUBLIC_FRONT_PORT=$FRONTEND_PORT --build-arg BUILDKIT_INLINE_CACHE=1 -t $IMAGE_TAG --cache-from $IMAGE_TAG -f Dockerfile.prod .
+    - docker push $IMAGE_TAG
+
+build-rest-api:
+  stage: build
+  interruptible: true
+  image: docker
+  services:
+    - docker:dind
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/rest_api:$CI_COMMIT_REF_SLUG
+  before_script:
+    - *login-docker
+  script:
+    - cd rest_api
+    - docker pull $IMAGE_TAG || true
+    - docker build --build-arg BUILDKIT_INLINE_CACHE=1 -t $IMAGE_TAG --cache-from $IMAGE_TAG -f Dockerfile.prod .
+    - docker push $IMAGE_TAG
+
+build-rest-api-test:
+  stage: build
+  interruptible: true
+  image: docker
+  services:
+    - docker:dind
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/rest_api-test:$CI_COMMIT_REF_SLUG
+  before_script:
+    - *login-docker
+  script:
+    - docker pull $IMAGE_TAG || true
+    - docker build --build-arg BUILDKIT_INLINE_CACHE=1 -t $IMAGE_TAG --cache-from $IMAGE_TAG -f rest_api_tests/Dockerfile .
+    - docker push $IMAGE_TAG
+
+build-cypress:
+  stage: build
+  interruptible: true
+  image: docker
+  services:
+    - docker:dind
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/cypress:$CI_COMMIT_REF_SLUG
+  before_script:
+    - *login-docker
+  script:
+    - cd cypress
+    - docker pull $IMAGE_TAG || true
+    - docker build -t $IMAGE_TAG --cache-from $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+
+test-python:
+  stage: test
+  interruptible: true
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/rest_api-test:$CI_COMMIT_REF_SLUG
+  needs: [build-rest-api-test]
+  before_script:
+    - *write-env-file
+    - *login-docker
+    - mkdir -p ./data
+    - docker compose -f environment/compose.ci.yaml up -d db couch_db webdav --wait
+  script:
+    - docker run --env-file environment/.env.ci --net trainmate-network $IMAGE_TAG
+  after_script:
+    - docker compose -f environment/compose.ci.yaml down
+
+test-cypress:
+  stage: test
+  interruptible: true
+  image: docker:latest
+  services:
+    - docker:dind
+  artifacts:
+    paths:
+      - cypress/videos
+      - cypress/screenshots
+    expire_in: 1 day
+    when: always
+  variables:
+    IMAGE_TAG: $CI_REGISTRY_IMAGE/cypress:$CI_COMMIT_REF_SLUG
+  needs: [build-cypress, build-rest-api, build-frontend]
+  before_script:
+    - *write-env-file
+    - *login-docker
+    - mkdir -p ./data
+    - docker compose -f environment/compose.ci.yaml up -d --wait
+  script:
+    - docker run --env-file environment/.env.ci --net trainmate-network -v $PWD/cypress/videos:/app/cypress/videos -v $PWD/cypress/screenshots:/app/cypress/screenshots $IMAGE_TAG
+  after_script:
+    - docker compose -f environment/compose.ci.yaml down

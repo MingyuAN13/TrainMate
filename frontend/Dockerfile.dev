@@ -1,0 +1,20 @@
+FROM node:18-alpine
+
+ARG REST_HOST_ADDRESS
+ARG REST_PORT
+WORKDIR /app
+
+ENV NODE_ENV=development
+
+# Install curl for healthcheck
+RUN apk --no-cache add curl
+
+COPY package.json package-lock.json* ./
+RUN npm install
+
+COPY . .
+
+RUN echo "REST_HOST_ADDRESS=$REST_HOST_ADDRESS" >> .env
+RUN echo "REST_PORT=$REST_PORT" >> .env
+
+CMD npm run dev

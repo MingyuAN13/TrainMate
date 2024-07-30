@@ -1,0 +1,55 @@
+services:
+  rest:
+    restart: always
+    build:
+      context: ../rest_api/
+      dockerfile: Dockerfile.prod
+    image: trainmate-rest-api-prod
+    container_name: trainmate-rest-api-prod
+    ports:
+      - "${REST_PORT}:5002"
+    env_file:
+      - .env
+    extra_hosts:
+      - "127.0.0.1:127.0.0.1"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -f POST http://rest:${REST_PORT}/api/health",
+        ]
+      interval: 1s
+      retries: 30
+      timeout: 10s
+
+  frontend:
+    restart: always
+    env_file:
+      - .env
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.prod
+      args:
+        REST_HOST_ADDRESS: ${REST_HOST_ADDRESS}
+        REST_PORT: ${REST_PORT}
+    image: trainmate-frontend-prod
+    container_name: trainmate-frontend-prod
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    depends_on:
+      rest:
+        condition: service_healthy
+    links:
+      - rest
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://frontend:${FRONTEND_PORT}/login"]
+      interval: 1s
+      retries: 30
+      timeout: 10s
+    extra_hosts:
+      - "127.0.0.1:127.0.0.1"
+
+networks:
+  default:
+    name: trainmate-network

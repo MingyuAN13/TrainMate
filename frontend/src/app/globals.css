@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --foreground-light: #000; /* Black text color */
+    --background-light: #F3F5F9; /* White background color */
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /*--foreground-dark: #fff; /* White text color */
+        /* --background-dark: #333; /* Dark gray background color */
+    }
+}
+
+body {
+    color: var(--foreground-light); /* Default to light mode text color */
+    background-color: var(--background-light); /* Default to light mode background color */
+}
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+    body {
+        /* color: var(--foreground-dark);  */
+        /* background-color: var(--background-dark);  */
+    }
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: lightgray;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: lightgray;
+}
