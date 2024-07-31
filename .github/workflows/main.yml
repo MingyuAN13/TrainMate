@@ -175,6 +175,9 @@ jobs:
       - name: Print current working directory
         run: pwd
 
+      - name: List contents of the current directory
+        run: ls -la
+
       - name: Log in to Docker Hub
         run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login ${{ secrets.CI_REGISTRY }} -u ${{ secrets.CI_REGISTRY_USER }} --password-stdin
 
@@ -185,6 +188,9 @@ jobs:
       # Print IMAGE_TAG for debugging
       - name: Print IMAGE_TAG
         run: echo $IMAGE_TAG
+
+      - name: List contents of the rest_api directory
+        run: ls -la rest_api
 
       - name: Build and push Docker image
         run: |
