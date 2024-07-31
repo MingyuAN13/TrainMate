@@ -171,8 +171,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      # Debug step to print the current working directory
+      - name: Print current working directory
+        run: pwd
+
       - name: Log in to Docker Hub
         run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login ${{ secrets.CI_REGISTRY }} -u ${{ secrets.CI_REGISTRY_USER }} --password-stdin
+
+      # Debug step to check Docker login
+      - name: Check Docker login
+        run: docker info
+
+      # Print IMAGE_TAG for debugging
+      - name: Print IMAGE_TAG
+        run: echo $IMAGE_TAG
 
       - name: Build and push Docker image
         run: |
