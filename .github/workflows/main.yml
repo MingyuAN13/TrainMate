@@ -214,7 +214,7 @@ jobs:
         image: docker:20.10.7
         options: --privileged
     env:
-      IMAGE_TAG: ${{ secrets.CI_REGISTRY_IMAGE }}/rest_api:${{ github.sha }}
+      IMAGE_TAG: mingyu207/trainmate:latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -239,7 +239,7 @@ jobs:
         image: docker:20.10.7
         options: --privileged
     env:
-      IMAGE_TAG: ${{ secrets.CI_REGISTRY_IMAGE }}/rest_api-test:${{ github.sha }}
+      IMAGE_TAG: mingyu207/trainmate:latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -260,7 +260,7 @@ jobs:
         image: docker:20.10.7
         options: --privileged
     env:
-      IMAGE_TAG: ${{ secrets.CI_REGISTRY_IMAGE }}/cypress:${{ github.sha }}
+      IMAGE_TAG: mingyu207/trainmate:latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -282,7 +282,7 @@ jobs:
         image: docker:20.10.7
         options: --privileged
     env:
-      IMAGE_TAG: ${{ secrets.CI_REGISTRY_IMAGE }}/rest_api-test:${{ github.sha }}
+      IMAGE_TAG: mingyu207/trainmate:latest
     needs: build-rest-api-test
     steps:
       - name: Checkout code
