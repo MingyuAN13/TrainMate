@@ -166,7 +166,7 @@ jobs:
         image: docker:20.10.7
         options: --privileged
     env:
-      IMAGE_TAG: $mingyu207/trainmate:${{ github.sha }}
+      IMAGE_TAG: mingyu207/trainmate:latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
