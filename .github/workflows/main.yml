@@ -159,14 +159,14 @@ jobs:
           docker build --build-arg REST_HOST_ADDRESS=$REST_HOST_ADDRESS --build-arg REST_PORT=$REST_PORT --build-arg NEXT_PUBLIC_FRONT_PORT=$FRONTEND_PORT --build-arg BUILDKIT_INLINE_CACHE=1 -t $IMAGE_TAG --cache-from $IMAGE_TAG -f Dockerfile.prod .
           docker push $IMAGE_TAG
 
-  build-rest-api:
+  build-and-push:
     runs-on: ubuntu-latest
     services:
       docker:
         image: docker:20.10.7
         options: --privileged
     env:
-      IMAGE_TAG: ${{ secrets.CI_REGISTRY_IMAGE }}/rest_api:${{ github.sha }}
+      IMAGE_TAG: ${{ secrets.CI_REGISTRY_IMAGE }}/test:${{ github.sha }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -184,7 +184,8 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Log in to Docker Hub using a personal access token
-        run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login ${{ env.CI_REGISTRY }} -u ${{ secrets.CI_REGISTRY_USER }} --password-stdin
+        run: |
+          echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login ${{ env.CI_REGISTRY }} -u ${{ secrets.CI_REGISTRY_USER }} --password-stdin
 
       - name: Verify Docker login
         run: docker info
@@ -195,8 +196,31 @@ jobs:
       - name: Print Docker Hub Username
         run: echo ${{ secrets.CI_REGISTRY_USER }}
 
-      - name: List contents of the rest_api directory
-        run: ls -la rest_api
+      - name: Build a simple Docker image
+        run: |
+          echo "FROM alpine:latest" > Dockerfile
+          docker build -t $IMAGE_TAG .
+
+      - name: Push Docker image
+        run: docker push $IMAGE_TAG
+
+  build-rest-api:
+    runs-on: ubuntu-latest
+    services:
+      docker:
+        image: docker:20.10.7
+        options: --privileged
+    env:
+      IMAGE_TAG: ${{ secrets.CI_REGISTRY_IMAGE }}/rest_api:${{ github.sha }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to Docker Hub using a personal access token
+        run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login ${{ env.CI_REGISTRY }} -u ${{ secrets.CI_REGISTRY_USER }} --password-stdin
 
       - name: Build Docker image
         run: docker build -f Dockerfile.prod -t $IMAGE_TAG .
