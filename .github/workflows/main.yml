@@ -199,10 +199,13 @@ jobs:
       - name: Build a simple Docker image
         run: |
           echo "FROM alpine:latest" > Dockerfile
-          docker build -t $IMAGE_TAG .
+          docker build -t $IMAGE_TAG -f Dockerfile .
+
+      - name: Print IMAGE_TAG for debugging
+        run: echo $IMAGE_TAG
 
       - name: Push Docker image
-        run: docker push $IMAGE_TAG
+        run: docker push $IMAGE_TAG 
 
   build-rest-api:
     runs-on: ubuntu-latest
