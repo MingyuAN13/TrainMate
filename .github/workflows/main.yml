@@ -156,7 +156,7 @@ jobs:
         run: |
           cd frontend
           docker pull $IMAGE_TAG || true
-          docker build --build-arg REST_HOST_ADDRESS=$REST_HOST_ADDRESS --build-arg REST_PORT=$REST_PORT --build-arg NEXT_PUBLIC_FRONT_PORT=$FRONTEND_PORT --build-arg BUILDKIT_INLINE_CACHE=1 -t $IMAGE_TAG --cache-from $IMAGE_TAG -f Dockerfile.prod .
+          docker build --build-arg REST_HOST_ADDRESS=$REST_HOST_ADDRESS --build-arg REST_PORT=$REST_PORT --build-arg NEXT_PUBLIC_FRONT_PORT=$FRONTEND_PORT --build-arg BUILDKIT_INLINE_CACHE=1 -t $IMAGE_TAG -f Dockerfile.prod .
           docker push $IMAGE_TAG
 
   build-rest-api:
