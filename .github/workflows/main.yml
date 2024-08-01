@@ -156,7 +156,7 @@ jobs:
         run: |
           cd frontend
           docker pull $IMAGE_TAG || true
-          docker build -t $IMAGE_TAG --cache-from $IMAGE_TAG -f Dockerfile.prod .
+          docker build -f Dockerfile.prod -t $IMAGE_TAG --build-arg REST_HOST_ADDRESS=$REST_HOST_ADDRESS --build-arg REST_PORT=$REST_PORT --build-arg NEXT_PUBLIC_FRONT_PORT=$FRONTEND_PORT --build-arg BUILDKIT_INLINE_CACHE=1 .
           docker push $IMAGE_TAG
 
   build-rest-api:
@@ -178,7 +178,7 @@ jobs:
         run: echo "${{ secrets.CI_REGISTRY_PASSWORD }}" | docker login ${{ secrets.CI_REGISTRY }} -u ${{ secrets.CI_REGISTRY_USER }} --password-stdin
 
       - name: Build Docker image
-        run: docker build --build-arg BUILDKIT_INLINE_CACHE=1 -t $IMAGE_TAG --cache-from $IMAGE_TAG -f Dockerfile.prod .
+        run: docker build -f Dockerfile.prod -t $IMAGE_TAG --build-arg BUILDKIT_INLINE_CACHE=1 .
         working-directory: rest_api
 
       - name: Push Docker image
