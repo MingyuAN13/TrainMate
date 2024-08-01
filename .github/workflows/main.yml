@@ -184,6 +184,9 @@ jobs:
         run: docker buildx build -f Dockerfile.prod -t $IMAGE_TAG --build-arg BUILDKIT_INLINE_CACHE=1 .
         working-directory: rest_api
 
+      - name: List Docker images
+        run: docker images
+
       - name: Push Docker image
         run: docker push $IMAGE_TAG
 
