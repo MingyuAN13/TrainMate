@@ -140,7 +140,7 @@ jobs:
         image: docker:20.10.7
         options: --privileged
     env:
-      IMAGE_TAG: mingyu207/trainmate:latest
+      IMAGE_TAG: mingyu207/trainmate:frontend
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -166,7 +166,7 @@ jobs:
         image: docker:20.10.7
         options: --privileged
     env:
-      IMAGE_TAG: mingyu207/trainmate:latest
+      IMAGE_TAG: mingyu207/trainmate:rest_api
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -191,7 +191,7 @@ jobs:
         image: docker:20.10.7
         options: --privileged
     env:
-      IMAGE_TAG: mingyu207/trainmate:latest
+      IMAGE_TAG: mingyu207/trainmate:rest_api-test
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -212,7 +212,7 @@ jobs:
         image: docker:20.10.7
         options: --privileged
     env:
-      IMAGE_TAG: mingyu207/trainmate:latest
+      IMAGE_TAG: mingyu207/trainmate:cypress
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
