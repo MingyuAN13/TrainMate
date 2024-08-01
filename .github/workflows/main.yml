@@ -186,15 +186,12 @@ jobs:
           username: ${{ secrets.CI_REGISTRY_USER }}
           password: ${{ secrets.CI_REGISTRY_PASSWORD }}
 
-      - name: Build Docker image
-        run: docker buildx build --load -f Dockerfile.prod -t $IMAGE_TAG --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from $IMAGE_TAG.
-        working-directory: rest_api
-
-      - name: List Docker images
-        run: docker images
-
-      - name: Push Docker image
-        run: docker push $IMAGE_TAG
+      - name: Build and push Docker image
+        run: |
+          cd rest_api
+          docker pull $IMAGE_TAG || true
+          docker buildx build --load -f Dockerfile.prod -t $IMAGE_TAG --build-arg BUILDKIT_INLINE_CACHE=1 --cache-from $IMAGE_TAG .
+          docker push $IMAGE_TAG
 
   build-rest-api-test:
     runs-on: ubuntu-latest
