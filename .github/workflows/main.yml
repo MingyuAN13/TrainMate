@@ -288,6 +288,13 @@ jobs:
         uses: azure/setup-kubectl@v4
         with:
           version: latest
+      
+      - name: Test Docker pull image
+        run: |
+          docker pull mingyu207/trainmate:frontend
+          docker pull mingyu207/trainmate:rest_api
+          docker pull mingyu207/trainmate:rest_api-test
+          docker pull mingyu207/trainmate:cypress
 
       - name: Deploy to Kubernetes
         run: |
@@ -301,6 +308,9 @@ jobs:
           kubectl get pods --all-namespaces
           kubectl get services
           kubectl describe deployment trainmate
+          kubectl get pods --show-all --namespace=default
           kubectl describe pods
+          kubectl get nodes
+          kubectl describe nodes
 
 
