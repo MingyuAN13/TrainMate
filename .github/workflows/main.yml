@@ -305,7 +305,6 @@ jobs:
       - name: Verify Deployment
         run: |
           kubectl get pods
-          kubectl describe pod trainmate-b44c9df57-d9klp
           kubectl get pv
           kubectl get pvc
           
