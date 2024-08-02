@@ -17,11 +17,11 @@ spec:
         image: mingyu207/trainmate:frontend
         ports:
         - containerPort: 80
-      - name: rest_api
+      - name: rest-api
         image: mingyu207/trainmate:rest_api
         ports:
         - containerPort: 8080
-      - name: rest_api-test
+      - name: rest-api-test
         image: mingyu207/trainmate:rest_api-test
         ports:
         - containerPort: 9090
