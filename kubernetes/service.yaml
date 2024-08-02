@@ -3,10 +3,10 @@ kind: Service
 metadata:
   name: trainmate
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: trainmate
   ports:
-    - pname: http
+    - protocol: TCP
       port: 80
-      targetPort: 80
+      targetPort: 3000
