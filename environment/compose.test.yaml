@@ -123,7 +123,9 @@ services:
 
   cypress:
     profiles: ["cypress"]
-    build: ../cypress
+    build: 
+      context: ../
+      dockerfile: cypress/Dockerfile
     image: trainmate-cypress
     container_name: trainmate-cypress
     depends_on:

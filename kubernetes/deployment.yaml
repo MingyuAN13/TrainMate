@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trainmate
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: trainmate
+  template:
+    metadata:
+      labels:
+        app: trainmate
+    spec:
+      containers:
+      - name: frontend
+        image: mingyu207/trainmate:frontend
+        ports:
+        - containerPort: 80
+      - name: rest_api
+        image: mingyu207/trainmate:rest_api
+        ports:
+        - containerPort: 8080
+      - name: rest_api-test
+        image: mingyu207/trainmate:rest_api-test
+        ports:
+        - containerPort: 9090
+      - name: cypress
+        image: mingyu207/trainmate:cypress
+        ports:
+        - containerPort: 7070

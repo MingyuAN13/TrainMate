@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: trainmate
+spec:
+  type: LoadBalancer
+  selector:
+    app: trainmate
+  ports:
+    - pname: http
+      port: 80
+      targetPort: 80
