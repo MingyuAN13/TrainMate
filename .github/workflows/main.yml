@@ -285,9 +285,9 @@ jobs:
           kind create cluster --name cluster
 
       - name: Set up Kubectl
-        uses: azure/setup-kubectl@v2
+        uses: azure/setup-kubectl@v4
         with:
-          version: 'latest'
+          version: '<version>' # default is latest stable
 
       - name: Deploy to Kubernetes
         run: |
