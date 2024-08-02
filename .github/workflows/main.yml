@@ -304,11 +304,9 @@ jobs:
 
       - name: Verify Deployment
         run: |
-          kubectl get deployments
-          kubectl get pods --all-namespaces
+          kubectl get pods
           kubectl get services
           kubectl describe deployment trainmate
-          kubectl get pods --show-all --namespace=default
           kubectl describe pods
           kubectl get nodes
           kubectl describe nodes
