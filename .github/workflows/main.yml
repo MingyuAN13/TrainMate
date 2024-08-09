@@ -95,11 +95,10 @@ jobs:
         with:
           # Additional arguments for the SonarScanner CLI
           args:
-            sonar-scanner \
-              -Dsonar.projectKey=MingyuAN13/TrainMate \
-              -Dsonar.organization=mingyuan13 \
-              -Dsonar.sources=. \
-              -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.projectKey=MingyuAN13/TrainMate
+              -Dsonar.organization=mingyuan13
+              -Dsonar.sources=. 
+              -Dsonar.host.url=https://sonarcloud.io
               -Dsonar.login=$SONAR_TOKEN
 
       # - name: Analyze code with Understand
