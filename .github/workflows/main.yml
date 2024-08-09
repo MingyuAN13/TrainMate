@@ -97,6 +97,7 @@ jobs:
               -Dsonar.organization=mingyuan13
               -Dsonar.sources=. 
               -Dsonar.login=$SONAR_TOKEN
+              -X
 
       # - name: Analyze code with Understand
       #   run: |
