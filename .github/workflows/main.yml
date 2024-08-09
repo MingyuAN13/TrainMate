@@ -88,19 +88,36 @@ jobs:
           cd ..
           pip install -r ./rest_api/requirements.txt
 
-      - name: Analyze code with Understand
+      - name: Run SonarCloud Scan
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          und -verbose analyze -db .ci/understand-settings.und || true
-          und -verbose metrics .ci/understand-settings.und || true
-          und export -format longnoroot -dependencies file csv .ci/dependencies.csv .ci/understand-settings.und
-
-      - name: Upload Understand artifacts
+          sonar-scanner \
+            -Dsonar.projectKey=MingyuAN13/TrainMate \
+            -Dsonar.organization=mingyuan13 \
+            -Dsonar.sources=. \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=$SONAR_TOKEN
+  
+      - name: Upload SonarCloud results
         uses: actions/upload-artifact@v2
         with:
-          name: understand-artifacts
-          path: |
-            .ci/understand-settings.csv
-            .ci/dependencies.csv
+          name: sonar-report
+          path: .scannerwork
+
+      # - name: Analyze code with Understand
+      #   run: |
+      #     und -verbose analyze -db .ci/understand-settings.und || true
+      #     und -verbose metrics .ci/understand-settings.und || true
+      #     und export -format longnoroot -dependencies file csv .ci/dependencies.csv .ci/understand-settings.und
+
+      # - name: Upload Understand artifacts
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: understand-artifacts
+      #     path: |
+      #       .ci/understand-settings.csv
+      #       .ci/dependencies.csv
 
   analyze-duplication:
     runs-on: ubuntu-latest
