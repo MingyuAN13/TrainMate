@@ -101,12 +101,6 @@ jobs:
               -Dsonar.sources=. \
               -Dsonar.host.url=https://sonarcloud.io \
               -Dsonar.login=$SONAR_TOKEN
-  
-      - name: Upload SonarCloud results
-        uses: actions/upload-artifact@v2
-        with:
-          name: sonar-report
-          path: .scannerwork
 
       # - name: Analyze code with Understand
       #   run: |
