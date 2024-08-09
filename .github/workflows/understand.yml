@@ -85,10 +85,13 @@ jobs:
           npm install
           cd ..
           pip install -r ./rest_api/requirements.txt
+          sudo apt-get update
+          sudo apt-get install -y curl ca-certificates libxcb-xinerama0 libxkbcommon-x11-0 libxcb-shape0 libxcb-cursor0 libxcb-util1 libxcb-icccm4 libxcb-image0 libxcb1 libxcb-keysyms1 libxcb-render-util0
 
       - name: Install understand
         run: |
-          tar -xvzf .ci/Understand-6.4.1140-Linux-64bit.tgz
+          curl -o Understand.tgz -L https://download.scitools.com/Understand/Linux/Understand-6.4.1140-Linux-64bit.tgz
+          tar -xvzf Understand.tgz
 
       - name: Analyze code with Understand
         run: |
