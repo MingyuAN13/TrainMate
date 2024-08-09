@@ -90,7 +90,7 @@ jobs:
 
       - name: Install understand
         run: |
-          curl -o Understand.tgz -L https://download.scitools.com/Understand/Linux/Understand-6.4.1140-Linux-64bit.tgz
+          curl -o Understand.tgz -L https://s3.amazonaws.com/builds.scitools.com/all_builds/b1197/Understand/Understand-6.5.1197-Linux-64bit.tgz
           tar -xvzf Understand.tgz
 
       - name: Analyze code with Understand
