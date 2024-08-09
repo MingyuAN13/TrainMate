@@ -90,7 +90,8 @@ jobs:
               libxcb-xinerama0 libxkbcommon-x11-0 libxcb-shape0 libxcb-cursor0 \
               libxcb-util1 libxcb-icccm4 libxcb-image0 libxcb1 libxcb-keysyms1 \
               libxcb-render-util0 libqt6webenginewidgets6 libqt6webenginecore6 \
-              libqt6webchannel6 libqt6positioning6 libqt6quick6 libqt6sql6
+              libqt6webchannel6 libqt6positioning6 libqt6quick6 libqt6sql6 \
+              libqt6svg6
 
       - name: Install understand
         run: |
