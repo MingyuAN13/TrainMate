@@ -94,7 +94,7 @@ jobs:
           # Additional arguments for the SonarScanner CLI
           args:
               -Dsonar.organization=mingyuan13
-              -Dsonar.projectKey=MingyuAN13/TrainMate
+              -Dsonar.projectKey=MingyuAN13_TrainMate
               -Dsonar.sources=. 
               -Dsonar.login=$SONAR_TOKEN
               -X
