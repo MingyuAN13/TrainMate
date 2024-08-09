@@ -3,11 +3,9 @@ name: CI Workflow
 on:
   push:
     branches:
-      - main
       - master
   pull_request:
     branches:
-      - main
       - master
 
 env:
@@ -88,7 +86,7 @@ jobs:
           cd ..
           pip install -r ./rest_api/requirements.txt
 
-      - name: Run SonarCloud Scan
+      - name: Analyze with SonarCloud
         uses: SonarSource/sonarcloud-github-action@4006f663ecaf1f8093e8e4abb9227f6041f52216
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -98,7 +96,6 @@ jobs:
               -Dsonar.projectKey=MingyuAN13/TrainMate
               -Dsonar.organization=mingyuan13
               -Dsonar.sources=. 
-              -Dsonar.host.url=https://sonarcloud.io
               -Dsonar.login=$SONAR_TOKEN
 
       # - name: Analyze code with Understand
