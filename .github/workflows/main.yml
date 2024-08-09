@@ -89,16 +89,18 @@ jobs:
           pip install -r ./rest_api/requirements.txt
 
       - name: Run SonarCloud Scan
-        uses: uses: SonarSource/sonarcloud-github-action@4006f663ecaf1f8093e8e4abb9227f6041f52216
+        uses: SonarSource/sonarcloud-github-action@4006f663ecaf1f8093e8e4abb9227f6041f52216
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          sonar-scanner \
-            -Dsonar.projectKey=MingyuAN13/TrainMate \
-            -Dsonar.organization=mingyuan13 \
-            -Dsonar.sources=. \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.login=$SONAR_TOKEN
+        with:
+          # Additional arguments for the SonarScanner CLI
+          args:
+            sonar-scanner \
+              -Dsonar.projectKey=MingyuAN13/TrainMate \
+              -Dsonar.organization=mingyuan13 \
+              -Dsonar.sources=. \
+              -Dsonar.host.url=https://sonarcloud.io \
+              -Dsonar.login=$SONAR_TOKEN
   
       - name: Upload SonarCloud results
         uses: actions/upload-artifact@v2
