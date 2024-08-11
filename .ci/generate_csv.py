@@ -16,7 +16,7 @@ csv_columns = [
 ]
 
 # Open the CSV file and write the data
-with open('understand-settings.csv', 'w', newline='') as csv_file:
+with open('sonar_analysis.csv', 'w', newline='') as csv_file:
     writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
     writer.writeheader()
 
