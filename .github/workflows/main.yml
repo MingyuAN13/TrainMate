@@ -116,9 +116,18 @@ jobs:
         env:
           SONAR_PROJECT_KEY: MingyuAN13_TrainMate
         run: |
+          mkdir -p .ci
           curl -s -u ${{ secrets.SONAR_TOKEN }}: \
-            "https://sonarcloud.io/api/measures/component_tree?component=${{ env.SONAR_PROJECT_KEY }}&metricKeys=complexity,ncloc,comment_lines_density,functions&ps=500" \
-            > sonar_analysis.json
+          "https://sonarcloud.io/api/measures/component_tree?component=${{ env.SONAR_PROJECT_KEY }}&metricKeys=complexity,ncloc,comment_lines_density,functions&ps=500" \
+            > .ci/sonar_analysis.json
+          if [ ! -s .ci/sonar_analysis.json ]; then
+          echo "Failed to generate sonar_analysis.json"
+          exit 1
+          fi
+      
+      - name: List files in .ci directory
+        run: |
+          ls -al .ci
       
       - name: Upload Sonar Analysis JSON
         uses: actions/upload-artifact@v2
