@@ -142,8 +142,9 @@ jobs:
           path: .ci
 
       - name: Convert Sonar JSON to CSV
+        working-directory: .ci
         run: |
-          python3 .ci/generate_csv.py .ci/sonar_analysis.json .ci/sonar_analysis.csv
+          python3 generate_csv.py sonar_analysis.json sonar_analysis.csv
 
   analyze-duplication:
     runs-on: ubuntu-latest
