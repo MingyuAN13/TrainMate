@@ -119,6 +119,12 @@ jobs:
           curl -s -u ${{ secrets.SONAR_TOKEN }}: \
             "https://sonarcloud.io/api/measures/component_tree?component=${{ env.SONAR_PROJECT_KEY }}&metricKeys=complexity,ncloc,comment_lines_density,functions&ps=500" \
             > sonar_analysis.json
+      
+      - name: Upload Sonar Analysis JSON
+        uses: actions/upload-artifact@v2
+        with:
+          name: sonar-analysis-json
+          path: .ci/sonar_analysis.json
 
   analyze-duplication:
     runs-on: ubuntu-latest
