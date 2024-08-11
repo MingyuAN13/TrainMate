@@ -135,6 +135,10 @@ jobs:
           name: sonar-analysis-json
           path: .ci/sonar_analysis.json
 
+      - name: Convert Sonar JSON to CSV
+        run: |
+          python3 .ci/generate_csv.py .ci/sonar_analysis.json .ci/sonar_analysis.csv
+
   analyze-duplication:
     runs-on: ubuntu-latest
     steps:
@@ -164,7 +168,7 @@ jobs:
       - name: Validate analysis
         run: |
           cd .ci/understand-validator
-          cargo run --release
+          cargo run --release -- ../sonar_analysis.csv
 
   build-frontend:
     runs-on: ubuntu-latest

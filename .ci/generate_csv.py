@@ -1,38 +1,33 @@
 import json
 import csv
-import sys
 
-def generate_csv(json_file, csv_file):
-    with open(json_file, 'r') as f:
-        data = json.load(f)
+# Read the JSON file
+with open('sonar_analysis.json', 'r') as json_file:
+    data = json.load(json_file)
 
-    components = data.get('components', [])
+# Define the column names for the CSV file
+csv_columns = [
+    "File", 
+    "AvgCyclomatic", 
+    "MaxCyclomatic", 
+    "CountLineCode", 
+    "RatioCommentToCode", 
+    "CountDeclFunction"
+]
 
-    with open(csv_file, 'w', newline='') as f:
-        writer = csv.writer(f)
-        # 写入CSV表头
-        writer.writerow([
-            "File", "Kind", "Name", "AvgCyclomatic", 
-            "CountLineCode", "MaxCyclomatic", "RatioCommentToCode", "CountDeclFunction"
-        ])
+# Open the CSV file and write the data
+with open('understand-settings.csv', 'w', newline='') as csv_file:
+    writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
+    writer.writeheader()
 
-        for component in components:
-            file_path = component.get('path', '')
-            measures = {m['metric']: m['value'] for m in component.get('measures', [])}
-
-            writer.writerow([
-                file_path, 
-                "File", 
-                component.get('name', ''), 
-                measures.get('complexity', ''),
-                measures.get('ncloc', ''),
-                measures.get('max_complexity', ''),  # 
-                measures.get('comment_lines_density', ''),
-                measures.get('functions', '')
-            ])
-
-if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print("Usage: python generate_csv.py <input_json_file> <output_csv_file>")
-    else:
-        generate_csv(sys.argv[1], sys.argv[2])
+    for component in data['components']:
+        # Construct the data for each row
+        file_data = {
+            "File": component['path'],
+            "AvgCyclomatic": component['measures'][1]['value'] if len(component['measures']) > 1 else None,
+            "MaxCyclomatic": component['measures'][2]['value'] if len(component['measures']) > 2 else None,
+            "CountLineCode": component['measures'][3]['value'] if len(component['measures']) > 3 else None,
+            "RatioCommentToCode": float(component['measures'][0]['value']) / 100 if len(component['measures']) > 0 else None,
+            "CountDeclFunction": component['measures'][2]['value'] if len(component['measures']) > 2 else None,
+        }
+        writer.writerow(file_data)
