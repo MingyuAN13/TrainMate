@@ -135,6 +135,12 @@ jobs:
           name: sonar-analysis-json
           path: .ci/sonar_analysis.json
 
+      - name: Download Sonar Analysis Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: sonar-analysis-json
+          path: .ci
+
       - name: Convert Sonar JSON to CSV
         run: |
           python3 .ci/generate_csv.py .ci/sonar_analysis.json .ci/sonar_analysis.csv
