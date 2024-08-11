@@ -142,6 +142,12 @@ jobs:
         run: |
           python3 generate_csv.py sonar_analysis.json sonar_analysis.csv
 
+      - name: Upload CSV as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: sonar-analysis-csv
+          path: .ci/sonar_analysis.csv
+
   analyze-duplication:
     runs-on: ubuntu-latest
     steps:
@@ -167,6 +173,12 @@ jobs:
 
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Download CSV Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: sonar-analysis-csv
+          path: .ci
 
       - name: List files in .ci directory after CSV generation
         run: |
