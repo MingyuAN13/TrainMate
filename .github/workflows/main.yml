@@ -125,10 +125,6 @@ jobs:
           exit 1
           fi
       
-      - name: List files in .ci directory
-        run: |
-          ls -al .ci
-      
       - name: Upload Sonar Analysis JSON
         uses: actions/upload-artifact@v2
         with:
@@ -171,6 +167,10 @@ jobs:
 
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: List files in .ci directory after CSV generation
+        run: |
+          ls -al .ci
 
       - name: Validate analysis
         run: |
