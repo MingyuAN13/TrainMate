@@ -158,7 +158,8 @@ jobs:
         run: |
           cd .ci/understand-validator
           cargo deps > ../dependency_graph.dot
-          dot -Tplain ../dependency_graph.dot | awk 'NR > 1 {print $2, $4, 1}' OFS=',' > ../dependency_graph.csv
+          echo "from_file,to_file,references" > ../dependency_graph.csv
+          dot -Tplain ../dependency_graph.dot | awk 'NR > 1 {print $2, $4, 1}' OFS=',' >> ../dependency_graph.csv
   
       - name: Upload Dependency Graph Artifacts
         uses: actions/upload-artifact@v2
