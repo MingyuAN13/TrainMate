@@ -287,66 +287,66 @@ fn calculate_grade(total_files: usize, violations: &HashMap<String, Vec<Violatio
     (sum + 10.0) / 2.0
 }
 
-#[derive(Debug, serde::Deserialize)]
-struct Dependency {
-    #[serde(rename = "From File")]
-    from_file: String,
-    #[serde(rename = "To File")]
-    to_file: String,
-    #[serde(rename = "References")]
-    references: u32,
-}
-fn check_dependencies() -> HashMap<String, Vec<Violation>> {
-    let file = fs::File::open("../sonar_analysis.csv").unwrap();
-    let mut reader = csv::Reader::from_reader(file);
+// #[derive(Debug, serde::Deserialize)]
+// struct Dependency {
+//     #[serde(rename = "From File")]
+//     from_file: String,
+//     #[serde(rename = "To File")]
+//     to_file: String,
+//     #[serde(rename = "References")]
+//     references: u32,
+// }
+// fn check_dependencies() -> HashMap<String, Vec<Violation>> {
+//     let file = fs::File::open("../sonar_analysis.csv").unwrap();
+//     let mut reader = csv::Reader::from_reader(file);
 
-    let depenciencies: Vec<Dependency> = reader
-        .deserialize()
-        .collect::<Result<Vec<Dependency>, csv::Error>>()
-        .unwrap();
+//     let depenciencies: Vec<Dependency> = reader
+//         .deserialize()
+//         .collect::<Result<Vec<Dependency>, csv::Error>>()
+//         .unwrap();
 
-    let cyclic_violations = check_circular_dependencies(&depenciencies);
-    let fan_out_violations = check_fan_out(&depenciencies);
+//     let cyclic_violations = check_circular_dependencies(&depenciencies);
+//     let fan_out_violations = check_fan_out(&depenciencies);
 
-    join_violations(cyclic_violations, fan_out_violations)
-}
+//     join_violations(cyclic_violations, fan_out_violations)
+// }
 
-fn check_circular_dependencies(depenciencies: &[Dependency]) -> HashMap<String, Vec<Violation>> {
-    let mut violations = HashMap::new();
+// fn check_circular_dependencies(depenciencies: &[Dependency]) -> HashMap<String, Vec<Violation>> {
+//     let mut violations = HashMap::new();
 
-    for dependency in depenciencies {
-        if dependency.from_file != dependency.to_file {
-            continue;
-        }
-        let mut violation = Vec::new();
-        violation.push(Violation::CyclicDependency(dependency.references));
-        violations
-            .entry(dependency.from_file.clone())
-            .or_insert(violation);
-    }
+//     for dependency in depenciencies {
+//         if dependency.from_file != dependency.to_file {
+//             continue;
+//         }
+//         let mut violation = Vec::new();
+//         violation.push(Violation::CyclicDependency(dependency.references));
+//         violations
+//             .entry(dependency.from_file.clone())
+//             .or_insert(violation);
+//     }
 
-    violations
-}
+//     violations
+// }
 
-fn check_fan_out(depenciencies: &[Dependency]) -> HashMap<String, Vec<Violation>> {
-    let references: Vec<(String, u32)> = depenciencies
-        .iter()
-        .group_by(|d| d.from_file.clone())
-        .into_iter()
-        .map(|(k, v)| (k, v.map(|d| d.references).sum()))
-        .collect_vec();
+// fn check_fan_out(depenciencies: &[Dependency]) -> HashMap<String, Vec<Violation>> {
+//     let references: Vec<(String, u32)> = depenciencies
+//         .iter()
+//         .group_by(|d| d.from_file.clone())
+//         .into_iter()
+//         .map(|(k, v)| (k, v.map(|d| d.references).sum()))
+//         .collect_vec();
 
-    let mut violations = HashMap::new();
-    for (file, references) in references.iter() {
-        if *references < 16 {
-            continue;
-        }
-        let mut violation = Vec::new();
-        violation.push(Violation::FanOut(*references));
-        violations.entry(file.clone()).or_insert(violation);
-    }
-    violations
-}
+//     let mut violations = HashMap::new();
+//     for (file, references) in references.iter() {
+//         if *references < 16 {
+//             continue;
+//         }
+//         let mut violation = Vec::new();
+//         violation.push(Violation::FanOut(*references));
+//         violations.entry(file.clone()).or_insert(violation);
+//     }
+//     violations
+// }
 
 #[derive(Debug, serde::Deserialize)]
 struct Analytic {

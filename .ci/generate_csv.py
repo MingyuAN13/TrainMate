@@ -1,33 +1,56 @@
 import json
 import csv
+import sys
 
-# Read the JSON file
-with open('sonar_analysis.json', 'r') as json_file:
-    data = json.load(json_file)
+def generate_analytic_csv(json_path, csv_path):
+    with open(json_path, 'r') as json_file:
+        data = json.load(json_file)
 
-# Define the column names for the CSV file
-csv_columns = [
-    "File", 
-    "AvgCyclomatic", 
-    "MaxCyclomatic", 
-    "CountLineCode", 
-    "RatioCommentToCode", 
-    "CountDeclFunction"
-]
+    components = data.get('components', [])
 
-# Open the CSV file and write the data
-with open('sonar_analysis.csv', 'w', newline='') as csv_file:
-    writer = csv.DictWriter(csv_file, fieldnames=csv_columns)
-    writer.writeheader()
+    with open(csv_path, 'w', newline='') as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerow([
+            "Kind", "Name", "File", 
+            "AvgCyclomatic", "CountLineCode", 
+            "MaxCyclomatic", "RatioCommentToCode", 
+            "CountDeclFunction"
+        ])
 
-    for component in data['components']:
-        # Construct the data for each row
-        file_data = {
-            "File": component['path'],
-            "AvgCyclomatic": component['measures'][1]['value'] if len(component['measures']) > 1 else None,
-            "MaxCyclomatic": component['measures'][2]['value'] if len(component['measures']) > 2 else None,
-            "CountLineCode": component['measures'][3]['value'] if len(component['measures']) > 3 else None,
-            "RatioCommentToCode": float(component['measures'][0]['value']) / 100 if len(component['measures']) > 0 else None,
-            "CountDeclFunction": component['measures'][2]['value'] if len(component['measures']) > 2 else None,
-        }
-        writer.writerow(file_data)
+        for component in components:
+            kind = component.get("qualifier", "FIL")
+            name = component.get("name")
+            file_path = component.get("path")
+
+            # Initialize metrics
+            avg_cyclomatic = None
+            count_line_code = None
+            max_cyclomatic = None
+            ratio_comment_to_code = None
+            count_decl_function = None
+
+            # Extract measures
+            for measure in component.get("measures", []):
+                if measure["metric"] == "complexity":
+                    avg_cyclomatic = int(measure["value"])
+                    max_cyclomatic = int(measure["value"])  # Assuming same value for simplicity
+                elif measure["metric"] == "ncloc":
+                    count_line_code = int(measure["value"])
+                elif measure["metric"] == "comment_lines_density":
+                    ratio_comment_to_code = float(measure["value"])
+                elif measure["metric"] == "functions":
+                    count_decl_function = int(measure["value"])
+
+            writer.writerow([
+                kind, name, file_path, 
+                avg_cyclomatic, count_line_code, 
+                max_cyclomatic, ratio_comment_to_code, 
+                count_decl_function
+            ])
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        print("Usage: python3 generate_analytic_csv.py <input_json_path> <output_csv_path>")
+        sys.exit(1)
+
+    generate_analytic_csv(sys.argv[1], sys.argv[2])
