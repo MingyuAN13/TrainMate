@@ -194,12 +194,16 @@ jobs:
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
 
-      - name: Download CSV Artifact
+      - name: Download Sonar Analysis CSV Artifact
         uses: actions/download-artifact@v2
         with:
-          name: |
-            sonar-analysis-csv
-            dependency-graph
+          name: sonar-analysis-csv
+          path: .ci
+      
+      - name: Download Dependency Graph Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: dependency-graph
           path: .ci
 
       - name: List files in .ci directory after CSV generation
