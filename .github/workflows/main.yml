@@ -156,7 +156,7 @@ jobs:
 
       - name: Run Dependency-Check
         run: |
-          dependency-check/bin/dependency-check.sh \
+          dependency-check/dependency-check/bin/dependency-check.sh \
           --project "My Project" \
           --scan . \
           --out dependency_graph \
