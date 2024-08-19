@@ -152,7 +152,7 @@ jobs:
         run: |
           wget https://github.com/jeremylong/DependencyCheck/releases/download/v10.0.3/dependency-check-10.0.3-release.zip
           unzip dependency-check-10.0.3-release.zip -d dependency-check
-          export PATH=$PATH:$PWD/dependency-check/bin
+          ls dependency-check # List files to confirm correct extraction
 
       - name: Run Dependency-Check
         run: |
