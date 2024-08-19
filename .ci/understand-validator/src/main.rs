@@ -297,7 +297,7 @@ struct Dependency {
     references: u32,
 }
 fn check_dependencies() -> HashMap<String, Vec<Violation>> {
-    let file = fs::File::open("../dependency_graph.csv").unwrap();
+    let file = fs::File::open("../../dependency-check-report.csv").unwrap();
     let mut reader = csv::Reader::from_reader(file);
 
     let depenciencies: Vec<Dependency> = reader
@@ -379,7 +379,7 @@ impl Display for Analytic {
 }
 
 fn check_code_quality() -> HashMap<String, Vec<Violation>> {
-    let file = fs::File::open("../sonar_analysis.csv").unwrap();
+    let file = fs::File::open("../../sonar_analysis.csv").unwrap();
     let mut reader = csv::ReaderBuilder::new()
         .has_headers(true)
         .delimiter(b',')

@@ -157,10 +157,11 @@ jobs:
       - name: Run Dependency-Check
         run: |
           dependency-check/dependency-check/bin/dependency-check.sh \
-          --project "My Project" \
+          --project "TrainMate" \
           --scan . \
           --out dependency_graph \
           --format CSV
+          --nvdApiKey ${{ secrets.NVD_API_KEY }}
 
       - name: Upload CSV as Artifact
         uses: actions/upload-artifact@v2
@@ -213,7 +214,7 @@ jobs:
       - name: Validate analysis
         run: |
           cd .ci/understand-validator
-          cargo run --release -- ../sonar_analysis.csv ../dependency_graph.csv
+          cargo run --release -- ../sonar_analysis.csv ../dependency-check-report.csv
 
   build-frontend:
     runs-on: ubuntu-latest
