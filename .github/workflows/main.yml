@@ -154,20 +154,27 @@ jobs:
       - name: Install cargo-deps
         run: cargo install cargo-deps
   
-      - name: Generate dependency graph
-        run: |
-          cd .ci/understand-validator
-          cargo deps > ../dependency_graph.dot
-          echo "from_file,to_file,references" > ../dependency_graph.csv
-          dot -Tplain ../dependency_graph.dot | awk 'NR > 1 {print $2, $4, 1}' OFS=',' >> ../dependency_graph.csv
+      - name: Generate Dependency JSON
+        working-directory: .ci
+        run: cargo deps --all-deps --output-format json --output-file dependency_graph.json
   
       - name: Upload Dependency Graph Artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: dependency-graph
+          name: dependency-JSON
           path: |
-            .ci/dependency_graph.png
-            .ci/dependency_graph.csv
+            .ci/dependency_graph.json
+
+      - name: Convert Dependency JSON to CSV
+        working-directory: .ci
+        run: |
+          python3 convert_json_to_csv.py
+
+      - name: Upload CSV as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: dependency-csv
+          path: .ci/dependency_graph.csv
 
   analyze-duplication:
     runs-on: ubuntu-latest
@@ -204,7 +211,7 @@ jobs:
       - name: Download Dependency Graph Artifact
         uses: actions/download-artifact@v2
         with:
-          name: dependency-graph
+          name: dependency-csv
           path: .ci
 
       - name: List files in .ci directory after CSV generation
