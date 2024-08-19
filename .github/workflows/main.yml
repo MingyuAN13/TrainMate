@@ -166,7 +166,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: dependency-csv
-          path: .ci/dependency_graph.csv
+          path:  /home/runner/work/TrainMate/TrainMate/dependency_graph/dependency-check-report.csv  
 
   analyze-duplication:
     runs-on: ubuntu-latest
