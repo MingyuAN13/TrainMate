@@ -297,7 +297,7 @@ struct Dependency {
     references: u32,
 }
 fn check_dependencies() -> HashMap<String, Vec<Violation>> {
-    let file = fs::File::open("../dependency-check-report.csv").unwrap();
+    let file = fs::File::open("../parsed_dependency_report.csv").unwrap();
     let mut reader = csv::Reader::from_reader(file);
 
     let depenciencies: Vec<Dependency> = reader

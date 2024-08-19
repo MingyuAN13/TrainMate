@@ -162,8 +162,18 @@ jobs:
       - name: Upload CSV as Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: dependency-csv
+          name: dependency-csv-b
           path:  /home/runner/work/TrainMate/TrainMate/dependency_graph/dependency-check-report.csv  
+
+      - name: Parse Dependency-Check CSV
+        run: |
+          python3 .ci/convert_csv.py
+
+      - name: Upload CSV as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: dependency-csv
+          path: .ci/parsed_dependency_report.csv
 
   analyze-duplication:
     runs-on: ubuntu-latest
