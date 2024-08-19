@@ -148,27 +148,19 @@ jobs:
           name: sonar-analysis-csv
           path: .ci/sonar_analysis.csv
       
-      - name: Install Graphviz
-        run: sudo apt-get install -y graphviz
-
-      - name: Install cargo-geiger
-        run: cargo install cargo-geiger
-  
-      - name: Generate Dependency JSON
-        working-directory: .ci
-        run: cargo geiger -o json > dependency_graph.json
-  
-      - name: Upload Dependency Graph Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: dependency-JSON
-          path: |
-            .ci/dependency_graph.json
-
-      - name: Convert Dependency JSON to CSV
-        working-directory: .ci
+      - name: Set up OWASP Dependency-Check
         run: |
-          python3 convert_json_to_csv.py
+          wget https://github.com/jeremylong/DependencyCheck/releases/download/v10.0.3/dependency-check-10.0.3-release.zip
+          unzip dependency-check-10.0.3-release.zip -d dependency-check
+          export PATH=$PATH:$PWD/dependency-check/bin
+
+      - name: Run Dependency-Check
+        run: |
+          dependency-check/bin/dependency-check.sh \
+          --project "My Project" \
+          --scan . \
+          --out dependency_graph \
+          --format CSV
 
       - name: Upload CSV as Artifact
         uses: actions/upload-artifact@v2
