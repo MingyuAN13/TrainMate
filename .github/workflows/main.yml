@@ -155,13 +155,9 @@ jobs:
           ls dependency-check # List files to confirm correct extraction
 
       - name: Run Dependency-Check
-        run: |
-          dependency-check/dependency-check/bin/dependency-check.sh \
-          --project "TrainMate" \
-          --scan . \
-          --out dependency_graph \
-          --format CSV
-          --nvdApiKey ${{ secrets.NVD_API_KEY }}
+        env:
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+        run: dependency-check/dependency-check/bin/dependency-check.sh --project "TrainMate" --scan . --out dependency_graph --format CSV --nvdApiKey $NVD_API_KEY
 
       - name: Upload CSV as Artifact
         uses: actions/upload-artifact@v2
