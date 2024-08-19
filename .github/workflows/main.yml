@@ -210,7 +210,7 @@ jobs:
       - name: Validate analysis
         run: |
           cd .ci/understand-validator
-          cargo run --release -- ../sonar_analysis.csv ../dependency-check-report.csv
+          cargo run --release
 
   build-frontend:
     runs-on: ubuntu-latest
