@@ -151,12 +151,12 @@ jobs:
       - name: Install Graphviz
         run: sudo apt-get install -y graphviz
 
-      - name: Install cargo-deps
-        run: cargo install cargo-deps
+      - name: Install cargo-geiger
+        run: cargo install cargo-geiger
   
       - name: Generate Dependency JSON
         working-directory: .ci
-        run: cargo deps --all-deps --output-format json --output-file dependency_graph.json
+        run: cargo geiger -o json > dependency_graph.json
   
       - name: Upload Dependency Graph Artifacts
         uses: actions/upload-artifact@v2
