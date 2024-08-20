@@ -9,4 +9,13 @@ spec:
   ports:
     - protocol: TCP
       port: 80
-      targetPort: 3000
+      targetPort: 80  # Maps to the frontend container port
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080  # Maps to the rest-api container port
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090  # Maps to the rest-api-test container port
+    - protocol: TCP
+      port: 7070
+      targetPort: 7070

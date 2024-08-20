@@ -408,6 +408,10 @@ jobs:
           # Check for Image Pulling Issues
           if kubectl describe pod $POD_NAME | grep -q 'ErrImagePull\|ImagePullBackOff'; then
             echo "Image pull issue detected!"
+            
+            # Fetch logs from all containers in the pod to understand the issue better
+            kubectl logs $POD_NAME --all-containers=true
+            
             exit 1
           fi
       
