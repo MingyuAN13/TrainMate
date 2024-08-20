@@ -386,14 +386,10 @@ jobs:
       #     docker pull mingyu207/trainmate:rest_api-test
       #     docker pull mingyu207/trainmate:cypress
 
-      - name: Check Node Resource Usage
-        run: |
-          kubectl top nodes || echo "Metrics server might not be available yet."
-          kubectl top pods --all-namespaces || echo "Metrics server might not be available yet."
-
       - name: Apply Metrics Server
         run: |
-          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml --force
+          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+          kubectl patch deployment metrics-server -n kube-system --patch '{"spec": {"template": {"spec": {"containers": [{"name": "metrics-server","args": ["--kubelet-insecure-tls", "--cert-dir=/tmp"]}]}}}}'
 
       - name: Wait for Metrics Server to be Ready
         run: |
@@ -402,10 +398,6 @@ jobs:
       - name: Check Metrics Server Logs
         run: |
           kubectl logs -l k8s-app=metrics-server -n kube-system || echo "No logs available yet."
-
-      - name: Describe Metrics Server Deployment
-        run: |
-          kubectl describe deployment metrics-server -n kube-system
 
       - name: Check Events in kube-system Namespace
         run: |
