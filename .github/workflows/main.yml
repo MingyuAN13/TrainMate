@@ -396,11 +396,18 @@ jobs:
         run: |
           PODS=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[*].metadata.name}')
           for POD in $PODS; do
-            echo "Logs for pod: $POD"
-            kubectl logs $POD -c frontend
-            kubectl logs $POD -c rest-api
-            kubectl logs $POD -c rest-api-test
-            kubectl logs $POD -c cypress
+            echo "Checking status for pod: $POD"
+            kubectl wait --for=condition=ready pod/$POD --timeout=300s
+            CONTAINER_STATUSES=$(kubectl get pod $POD -o jsonpath='{.status.containerStatuses[*].state.waiting.reason}')
+            if [ -z "$CONTAINER_STATUSES" ]; then
+              echo "Fetching logs for pod: $POD"
+              kubectl logs $POD -c frontend || echo "No logs for frontend container yet"
+              kubectl logs $POD -c rest-api || echo "No logs for rest-api container yet"
+              kubectl logs $POD -c rest-api-test || echo "No logs for rest-api-test container yet"
+              kubectl logs $POD -c cypress || echo "No logs for cypress container yet"
+            else
+              echo "Pod $POD is not ready, skipping logs collection."
+            fi
           done
 
       - name: Wait for pods to be ready
