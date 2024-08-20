@@ -396,13 +396,58 @@ jobs:
         run: |
           kubectl describe node cluster-control-plane
 
-      - name: Describe Pod Events
+      - name: Check Pod Status and Events
         run: |
-          kubectl describe pod $(kubectl get pods -l app=trainmate -o jsonpath='{.items[0].metadata.name}')
+          # Get the first pod name with the label app=trainmate
+          POD_NAME=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[0].metadata.name}')
+          echo "Pod Name: $POD_NAME"
+          
+          # Describe the pod to check events and status
+          kubectl describe pod $POD_NAME
+          
+          # Check for Image Pulling Issues
+          if kubectl describe pod $POD_NAME | grep -q 'ErrImagePull\|ImagePullBackOff'; then
+            echo "Image pull issue detected!"
+            exit 1
+          fi
 
-      - name: Check Node Taints
+      - name: Check Container Logs (if available)
         run: |
-          kubectl describe node cluster-control-plane | grep -i taints
+          POD_NAME=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[0].metadata.name}')
+          CONTAINERS=$(kubectl get pod $POD_NAME -o jsonpath='{.spec.containers[*].name}')
+          for CONTAINER in $CONTAINERS; do
+            echo "Fetching logs for container: $CONTAINER in pod: $POD_NAME"
+            kubectl logs $POD_NAME -c $CONTAINER || echo "No logs available for container: $CONTAINER"
+          done
+
+      - name: Check Node Resource Usage
+        run: |
+          kubectl top node cluster-control-plane
+          kubectl top pods
+
+      - name: Deploy a DNS Test Pod
+        run: |
+          kubectl run dns-test --image=busybox --restart=Never -- sleep 3600
+
+      - name: Verify DNS Resolution
+        run: |
+          kubectl exec dns-test -- nslookup kubernetes.default || \
+          (echo "DNS resolution failed!" && exit 1)
+          kubectl exec dns-test -- ping -c 4 kubernetes.default || \
+          (echo "Ping to kubernetes.default failed!" && exit 1)
+
+      - name: Check CoreDNS Logs
+        run: |
+          COREDNS_PODS=$(kubectl get pods -n kube-system -l k8s-app=kube-dns -o jsonpath='{.items[*].metadata.name}')
+          for POD in $COREDNS_PODS; do
+            echo "Checking logs for CoreDNS pod: $POD"
+            kubectl logs -n kube-system $POD || \
+            (echo "Failed to get logs for CoreDNS pod $POD!" && exit 1)
+          done
+
+      - name: Cleanup DNS Test Pod
+        run: |
+          kubectl delete pod dns-test || echo "Failed to delete test pod dns-test"
 
       - name: Wait for Pods to be Ready
         run: |
