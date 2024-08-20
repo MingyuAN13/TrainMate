@@ -420,19 +420,6 @@ jobs:
             kubectl logs $POD_NAME -c $CONTAINER || echo "No logs available for container: $CONTAINER"
           done
 
-      - name: Install Metrics Server
-        run: |
-          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-          
-      - name: Wait for Metrics Server to be Ready
-        run: |
-          kubectl wait --for=condition=available --timeout=120s deployment/metrics-server -n kube-system
-
-      - name: Check Node Resource Usage
-        run: |
-          kubectl top node cluster-control-plane
-          kubectl top pods
-
       - name: Deploy a DNS Test Pod
         run: |
           kubectl run dns-test --image=busybox --restart=Never -- sleep 3600
@@ -456,6 +443,19 @@ jobs:
       - name: Cleanup DNS Test Pod
         run: |
           kubectl delete pod dns-test || echo "Failed to delete test pod dns-test"
+
+      - name: Install Metrics Server
+        run: |
+          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+          
+      - name: Wait for Metrics Server to be Ready
+        run: |
+          kubectl wait --for=condition=available --timeout=120s deployment/metrics-server -n kube-system
+
+      - name: Check Node Resource Usage
+        run: |
+          kubectl top node cluster-control-plane
+          kubectl top pods
 
       - name: Wait for Pods to be Ready
         run: |
