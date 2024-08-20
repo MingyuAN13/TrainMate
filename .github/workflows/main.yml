@@ -379,12 +379,37 @@ jobs:
         with:
           version: latest
       
-      - name: Test Docker pull image
+      # - name: Test Docker pull image
+      #   run: |
+      #     docker pull mingyu207/trainmate:frontend
+      #     docker pull mingyu207/trainmate:rest_api
+      #     docker pull mingyu207/trainmate:rest_api-test
+      #     docker pull mingyu207/trainmate:cypress
+
+      - name: Check Node Resource Usage
         run: |
-          docker pull mingyu207/trainmate:frontend
-          docker pull mingyu207/trainmate:rest_api
-          docker pull mingyu207/trainmate:rest_api-test
-          docker pull mingyu207/trainmate:cypress
+          kubectl top nodes || echo "Metrics server might not be available yet."
+          kubectl top pods --all-namespaces || echo "Metrics server might not be available yet."
+
+      - name: Apply Metrics Server
+        run: |
+          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml --force
+
+      - name: Wait for Metrics Server to be Ready
+        run: |
+          kubectl wait --for=condition=available --timeout=300s deployment/metrics-server -n kube-system
+
+      - name: Check Metrics Server Logs
+        run: |
+          kubectl logs -l k8s-app=metrics-server -n kube-system || echo "No logs available yet."
+
+      - name: Describe Metrics Server Deployment
+        run: |
+          kubectl describe deployment metrics-server -n kube-system
+
+      - name: Check Events in kube-system Namespace
+        run: |
+          kubectl get events --sort-by='.lastTimestamp' -n kube-system
 
       - name: Deploy to Kubernetes
         run: |
@@ -392,49 +417,49 @@ jobs:
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
       
-      - name: Describe Node
-        run: |
-          kubectl describe node cluster-control-plane
+      # - name: Describe Node
+      #   run: |
+      #     kubectl describe node cluster-control-plane
 
-      - name: Check Pod Status and Events
-        run: |
-          # Get the first pod name with the label app=trainmate
-          POD_NAME=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[0].metadata.name}')
-          echo "Pod Name: $POD_NAME"
+      # - name: Check Pod Status and Events
+      #   run: |
+      #     # Get the first pod name with the label app=trainmate
+      #     POD_NAME=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[0].metadata.name}')
+      #     echo "Pod Name: $POD_NAME"
           
-          # Describe the pod to check events and status
-          kubectl describe pod $POD_NAME
+      #     # Describe the pod to check events and status
+      #     kubectl describe pod $POD_NAME
           
-          # Check for Image Pulling Issues
-          if kubectl describe pod $POD_NAME | grep -q 'ErrImagePull\|ImagePullBackOff'; then
-            echo "Image pull issue detected!"
+      #     # Check for Image Pulling Issues
+      #     if kubectl describe pod $POD_NAME | grep -q 'ErrImagePull\|ImagePullBackOff'; then
+      #       echo "Image pull issue detected!"
             
-            # Fetch logs from all containers in the pod to understand the issue better
-            kubectl logs $POD_NAME --all-containers=true
+      #       # Fetch logs from all containers in the pod to understand the issue better
+      #       kubectl logs $POD_NAME --all-containers=true
             
-            exit 1
-          fi
+      #       exit 1
+      #     fi
       
-      - name: Check Volume Mount Issues
-        run: |
-          POD_NAME=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[0].metadata.name}')
-          kubectl describe pod $POD_NAME | grep -i 'MountVolume.SetUp failed' && \
-          (echo "Volume mount issue detected!" && exit 1) || \
-          echo "No volume mount issues detected."
+      # - name: Check Volume Mount Issues
+      #   run: |
+      #     POD_NAME=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[0].metadata.name}')
+      #     kubectl describe pod $POD_NAME | grep -i 'MountVolume.SetUp failed' && \
+      #     (echo "Volume mount issue detected!" && exit 1) || \
+      #     echo "No volume mount issues detected."
 
-      - name: Check Node Resource Availability
-        run: |
-          kubectl describe node cluster-control-plane
-          kubectl top node cluster-control-plane || echo "Metrics server is not available."
+      # - name: Check Node Resource Availability
+      #   run: |
+      #     kubectl describe node cluster-control-plane
+      #     kubectl top node cluster-control-plane || echo "Metrics server is not available."
 
-      - name: Check Image Pulling Status
-        run: |
-          POD_NAME=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[0].metadata.name}')
-          kubectl describe pod $POD_NAME | grep -i 'pull' || echo "No image pull issues detected."
+      # - name: Check Image Pulling Status
+      #   run: |
+      #     POD_NAME=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[0].metadata.name}')
+      #     kubectl describe pod $POD_NAME | grep -i 'pull' || echo "No image pull issues detected."
 
-      - name: Get Detailed Events
-        run: |
-          kubectl get events --sort-by='.lastTimestamp' -n default
+      # - name: Get Detailed Events
+      #   run: |
+      #     kubectl get events --sort-by='.lastTimestamp' -n default
 
       # - name: Check Container Logs (if available)
       #   run: |
@@ -469,88 +494,85 @@ jobs:
       #   run: |
       #     kubectl delete pod dns-test || echo "Failed to delete test pod dns-test"
 
-      - name: Install Metrics Server
-        run: |
-          kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-          
-      - name: Wait for Metrics Server to be Ready
-        run: |
-          kubectl wait --for=condition=available --timeout=120s deployment/metrics-server -n kube-system
-
-      - name: Check Node Resource Usage
-        run: |
-          kubectl top node cluster-control-plane
-          kubectl top pods
-
-      - name: Wait for Pods to be Ready
+      - name: Wait for Application Pods to be Ready
         run: |
           kubectl wait --for=condition=ready pod -l app=trainmate --timeout=600s
 
-      - name: Check pod status and fetch logs
+      - name: Check Application Logs
         run: |
-          MAX_RETRIES=3
-          RETRY_COUNT=0
+          POD_NAME=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[0].metadata.name}')
+          kubectl logs $POD_NAME || echo "No logs available yet."
 
-          # Fetch all pod names with the label "app=trainmate"
-          PODS=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[*].metadata.name}')
+      - name: Describe Application Pods
+        run: |
+          POD_NAME=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[0].metadata.name}')
+          kubectl describe pod $POD_NAME
 
-          # Check if there are any pods to process
-          if [ -z "$PODS" ]; then
-            echo "No pods found with label app=trainmate. Exiting."
-            exit 1
-          fi
+      - name: Check Application Events
+        run: |
+          kubectl get events --sort-by='.lastTimestamp' -n default
 
-          for POD in $PODS; do
-            echo "Checking initial status for pod: $POD"
+      # - name: Check pod status and fetch logs
+      #   run: |
+      #     MAX_RETRIES=3
+      #     RETRY_COUNT=0
+
+      #     # Fetch all pod names with the label "app=trainmate"
+      #     PODS=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[*].metadata.name}')
+
+      #     # Check if there are any pods to process
+      #     if [ -z "$PODS" ]; then
+      #       echo "No pods found with label app=trainmate. Exiting."
+      #       exit 1
+      #     fi
+
+      #     for POD in $PODS; do
+      #       echo "Checking initial status for pod: $POD"
             
-            # Get the current phase of the pod
-            POD_PHASE=$(kubectl get pod $POD -o jsonpath='{.status.phase}')
-            echo "Initial phase of pod $POD is $POD_PHASE."
+      #       # Get the current phase of the pod
+      #       POD_PHASE=$(kubectl get pod $POD -o jsonpath='{.status.phase}')
+      #       echo "Initial phase of pod $POD is $POD_PHASE."
 
-            if [ "$POD_PHASE" != "Running" ]; then
-              echo "Pod $POD is not in Running phase, it's in $POD_PHASE. Checking details..."
+      #       if [ "$POD_PHASE" != "Running" ]; then
+      #         echo "Pod $POD is not in Running phase, it's in $POD_PHASE. Checking details..."
 
-              # Describe the pod to get more details
-              kubectl describe pod $POD
+      #         # Describe the pod to get more details
+      #         kubectl describe pod $POD
 
-              # Check if the pod is in a pending or container creating state
-              if [ "$POD_PHASE" == "Pending" ] || [ "$POD_PHASE" == "ContainerCreating" ]; then
-                echo "Pod $POD is $POD_PHASE. Waiting for it to become ready..."
-                while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-                  if kubectl wait --for=condition=ready pod/$POD --timeout=60s; then
-                    echo "Pod $POD is ready."
-                    break
-                  else
-                    echo "Pod $POD is not ready yet. Retrying... ($RETRY_COUNT/$MAX_RETRIES)"
-                    ((RETRY_COUNT++))
-                    sleep 10
-                  fi
-                done
-              fi
+      #         # Check if the pod is in a pending or container creating state
+      #         if [ "$POD_PHASE" == "Pending" ] || [ "$POD_PHASE" == "ContainerCreating" ]; then
+      #           echo "Pod $POD is $POD_PHASE. Waiting for it to become ready..."
+      #           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+      #             if kubectl wait --for=condition=ready pod/$POD --timeout=60s; then
+      #               echo "Pod $POD is ready."
+      #               break
+      #             else
+      #               echo "Pod $POD is not ready yet. Retrying... ($RETRY_COUNT/$MAX_RETRIES)"
+      #               ((RETRY_COUNT++))
+      #               sleep 10
+      #             fi
+      #           done
+      #         fi
 
-              if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-                echo "Pod $POD did not become ready after $MAX_RETRIES attempts. Exiting."
-                kubectl describe pod $POD
-                kubectl get pod $POD -o wide
-                exit 1
-              fi
-            else
-              echo "Pod $POD is already in Running phase."
-            fi
+      #         if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+      #           echo "Pod $POD did not become ready after $MAX_RETRIES attempts. Exiting."
+      #           kubectl describe pod $POD
+      #           kubectl get pod $POD -o wide
+      #           exit 1
+      #         fi
+      #       else
+      #         echo "Pod $POD is already in Running phase."
+      #       fi
 
-            # Reset retry counter for next pod
-            RETRY_COUNT=0
+      #       # Reset retry counter for next pod
+      #       RETRY_COUNT=0
 
-            # Fetch logs for each container in the pod
-            for CONTAINER in frontend rest-api rest-api-test cypress; do
-              echo "Fetching logs for container: $CONTAINER in pod: $POD"
-              kubectl logs $POD -c $CONTAINER || echo "No logs available for container: $CONTAINER in pod: $POD"
-            done
-          done
-
-      - name: Wait for pods to be ready
-        run: |
-          kubectl wait --for=condition=ready pod -l app=trainmate --timeout=300s
+      #       # Fetch logs for each container in the pod
+      #       for CONTAINER in frontend rest-api rest-api-test cypress; do
+      #         echo "Fetching logs for container: $CONTAINER in pod: $POD"
+      #         kubectl logs $POD -c $CONTAINER || echo "No logs available for container: $CONTAINER in pod: $POD"
+      #       done
+      #     done
 
       - name: Verify Deployment
         run: |
