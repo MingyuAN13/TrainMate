@@ -396,26 +396,58 @@ jobs:
         run: |
           MAX_RETRIES=3
           RETRY_COUNT=0
+
+          # Fetch all pod names with the label "app=trainmate"
           PODS=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[*].metadata.name}')
+
+          # Check if there are any pods to process
+          if [ -z "$PODS" ]; then
+            echo "No pods found with label app=trainmate. Exiting."
+            exit 1
+          fi
+
           for POD in $PODS; do
-            echo "Checking status for pod: $POD"
-            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              if kubectl wait --for=condition=ready pod/$POD --timeout=60s; then
-                echo "Pod $POD is ready."
-                break
-              else
-                echo "Pod $POD is not ready yet. Retrying... ($RETRY_COUNT/$MAX_RETRIES)"
-                ((RETRY_COUNT++))
-                sleep 10
-              fi
-            done
-            if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
-              echo "Pod $POD did not become ready after $MAX_RETRIES attempts. Exiting."
+            echo "Checking initial status for pod: $POD"
+            
+            # Get the current phase of the pod
+            POD_PHASE=$(kubectl get pod $POD -o jsonpath='{.status.phase}')
+            echo "Initial phase of pod $POD is $POD_PHASE."
+
+            if [ "$POD_PHASE" != "Running" ]; then
+              echo "Pod $POD is not in Running phase, it's in $POD_PHASE. Checking details..."
+
+              # Describe the pod to get more details
               kubectl describe pod $POD
-              kubectl get pod $POD -o wide
-              exit 1
+
+              # Check if the pod is in a pending or container creating state
+              if [ "$POD_PHASE" == "Pending" ] || [ "$POD_PHASE" == "ContainerCreating" ]; then
+                echo "Pod $POD is $POD_PHASE. Waiting for it to become ready..."
+                while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                  if kubectl wait --for=condition=ready pod/$POD --timeout=60s; then
+                    echo "Pod $POD is ready."
+                    break
+                  else
+                    echo "Pod $POD is not ready yet. Retrying... ($RETRY_COUNT/$MAX_RETRIES)"
+                    ((RETRY_COUNT++))
+                    sleep 10
+                  fi
+                done
+              fi
+
+              if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+                echo "Pod $POD did not become ready after $MAX_RETRIES attempts. Exiting."
+                kubectl describe pod $POD
+                kubectl get pod $POD -o wide
+                exit 1
+              fi
+            else
+              echo "Pod $POD is already in Running phase."
             fi
+
+            # Reset retry counter for next pod
             RETRY_COUNT=0
+
+            # Fetch logs for each container in the pod
             for CONTAINER in frontend rest-api rest-api-test cypress; do
               echo "Fetching logs for container: $CONTAINER in pod: $POD"
               kubectl logs $POD -c $CONTAINER || echo "No logs available for container: $CONTAINER in pod: $POD"
