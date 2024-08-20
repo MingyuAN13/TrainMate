@@ -7,15 +7,19 @@ spec:
   selector:
     app: trainmate
   ports:
-    - protocol: TCP
+    - name: frontend-port
+      protocol: TCP
       port: 80
-      targetPort: 80  # Maps to the frontend container port
-    - protocol: TCP
+      targetPort: 80
+    - name: rest-api-port
+      protocol: TCP
       port: 8080
-      targetPort: 8080  # Maps to the rest-api container port
-    - protocol: TCP
+      targetPort: 8080
+    - name: rest-api-test-port
+      protocol: TCP
       port: 9090
-      targetPort: 9090  # Maps to the rest-api-test container port
-    - protocol: TCP
+      targetPort: 9090
+    - name: cypress-port
+      protocol: TCP
       port: 7070
       targetPort: 7070
