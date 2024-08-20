@@ -392,6 +392,37 @@ jobs:
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
 
+      - name: Deploy a DNS Test Pod
+        run: |
+          kubectl run dns-test --image=busybox --restart=Never -- sleep 3600
+
+      - name: Verify DNS Resolution
+        run: |
+          kubectl exec -it dns-test -- nslookup kubernetes.default || \
+          (echo "DNS resolution failed!" && exit 1)
+          kubectl exec -it dns-test -- ping -c 4 kubernetes.default || \
+          (echo "Ping to kubernetes.default failed!" && exit 1)
+
+      - name: Test Network Connectivity to External Resource
+        run: |
+          kubectl exec -it dns-test -- ping -c 4 google.com || \
+          (echo "Ping to google.com failed!" && exit 1)
+
+      - name: Test Network Connectivity to a Kubernetes Service
+        run: |
+          SERVICE_IP=$(kubectl get svc <your-service-name> -o jsonpath='{.spec.clusterIP}')
+          kubectl exec -it dns-test -- ping -c 4 $SERVICE_IP || \
+          (echo "Ping to service $SERVICE_IP failed!" && exit 1)
+
+      - name: Check CoreDNS Pods Status
+        run: |
+          COREDNS_PODS=$(kubectl get pods -n kube-system -l k8s-app=kube-dns -o jsonpath='{.items[*].metadata.name}')
+          for POD in $COREDNS_PODS; do
+            echo "Checking logs for CoreDNS pod: $POD"
+            kubectl logs -n kube-system $POD || \
+            (echo "Failed to get logs for CoreDNS pod $POD!" && exit 1)
+          done
+
       - name: Check pod status and fetch logs
         run: |
           MAX_RETRIES=3
