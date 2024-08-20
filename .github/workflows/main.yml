@@ -97,6 +97,7 @@ jobs:
               -Dsonar.projectKey=MingyuAN13_TrainMate
               -Dsonar.sources=. 
               -Dsonar.login=$SONAR_TOKEN
+              -Dproject.settings=.ci/sonar-project.properties
               -X
 
       # - name: Analyze code with Understand
