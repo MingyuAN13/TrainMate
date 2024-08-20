@@ -394,11 +394,28 @@ jobs:
 
       - name: Check pod status and fetch logs
         run: |
+          MAX_RETRIES=3
+          RETRY_COUNT=0
           PODS=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[*].metadata.name}')
           for POD in $PODS; do
             echo "Checking status for pod: $POD"
-            kubectl wait --for=condition=ready pod/$POD --timeout=300s || echo "Pod $POD did not become ready in time"
-            kubectl describe pod $POD
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if kubectl wait --for=condition=ready pod/$POD --timeout=60s; then
+                echo "Pod $POD is ready."
+                break
+              else
+                echo "Pod $POD is not ready yet. Retrying... ($RETRY_COUNT/$MAX_RETRIES)"
+                ((RETRY_COUNT++))
+                sleep 10
+              fi
+            done
+            if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+              echo "Pod $POD did not become ready after $MAX_RETRIES attempts. Exiting."
+              kubectl describe pod $POD
+              kubectl get pod $POD -o wide
+              exit 1
+            fi
+            RETRY_COUNT=0
             for CONTAINER in frontend rest-api rest-api-test cypress; do
               echo "Fetching logs for container: $CONTAINER in pod: $POD"
               kubectl logs $POD -c $CONTAINER || echo "No logs available for container: $CONTAINER in pod: $POD"
