@@ -391,37 +391,22 @@ jobs:
           cd kubernetes
           kubectl apply -f deployment.yaml
           kubectl apply -f service.yaml
-
-      - name: Deploy a DNS Test Pod
+      
+      - name: Describe Node
         run: |
-          kubectl run dns-test --image=busybox --restart=Never -- sleep 3600
+          kubectl describe node cluster-control-plane
 
-      - name: Verify DNS Resolution
+      - name: Describe Pod Events
         run: |
-          kubectl exec -it dns-test -- nslookup kubernetes.default || \
-          (echo "DNS resolution failed!" && exit 1)
-          kubectl exec -it dns-test -- ping -c 4 kubernetes.default || \
-          (echo "Ping to kubernetes.default failed!" && exit 1)
+          kubectl describe pod $(kubectl get pods -l app=trainmate -o jsonpath='{.items[0].metadata.name}')
 
-      - name: Test Network Connectivity to External Resource
+      - name: Check Node Taints
         run: |
-          kubectl exec -it dns-test -- ping -c 4 google.com || \
-          (echo "Ping to google.com failed!" && exit 1)
+          kubectl describe node cluster-control-plane | grep -i taints
 
-      - name: Test Network Connectivity to a Kubernetes Service
+      - name: Wait for Pods to be Ready
         run: |
-          SERVICE_IP=$(kubectl get svc <your-service-name> -o jsonpath='{.spec.clusterIP}')
-          kubectl exec -it dns-test -- ping -c 4 $SERVICE_IP || \
-          (echo "Ping to service $SERVICE_IP failed!" && exit 1)
-
-      - name: Check CoreDNS Pods Status
-        run: |
-          COREDNS_PODS=$(kubectl get pods -n kube-system -l k8s-app=kube-dns -o jsonpath='{.items[*].metadata.name}')
-          for POD in $COREDNS_PODS; do
-            echo "Checking logs for CoreDNS pod: $POD"
-            kubectl logs -n kube-system $POD || \
-            (echo "Failed to get logs for CoreDNS pod $POD!" && exit 1)
-          done
+          kubectl wait --for=condition=ready pod -l app=trainmate --timeout=600s
 
       - name: Check pod status and fetch logs
         run: |
@@ -484,25 +469,6 @@ jobs:
               kubectl logs $POD -c $CONTAINER || echo "No logs available for container: $CONTAINER in pod: $POD"
             done
           done
-
-      # - name: Check logs for all containers
-      #   run: |
-      #     PODS=$(kubectl get pods -l app=trainmate -o jsonpath='{.items[*].metadata.name}')
-      #     for POD in $PODS; do
-      #       echo "Checking status for pod: $POD"
-      #       kubectl get pod $POD -o wide  # Add this line to get more details about the pod
-      #       kubectl wait --for=condition=ready pod/$POD --timeout=600s || echo "Pod $POD failed to reach ready state within the timeout"
-      #       CONTAINER_STATUSES=$(kubectl get pod $POD -o jsonpath='{.status.containerStatuses[*].state.waiting.reason}')
-      #       if [ -z "$CONTAINER_STATUSES" ]; then
-      #         echo "Fetching logs for pod: $POD"
-      #         kubectl logs $POD -c frontend || echo "No logs for frontend container yet"
-      #         kubectl logs $POD -c rest-api || echo "No logs for rest-api container yet"
-      #         kubectl logs $POD -c rest-api-test || echo "No logs for rest-api-test container yet"
-      #         kubectl logs $POD -c cypress || echo "No logs for cypress container yet"
-      #       else
-      #         echo "Pod $POD is not ready, skipping logs collection."
-      #       fi
-      #     done
 
       - name: Wait for pods to be ready
         run: |
