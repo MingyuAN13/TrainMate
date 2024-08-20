@@ -20,7 +20,7 @@ def generate_analytic_csv(json_path, csv_path):
         for component in components:
             kind = component.get("qualifier", "FIL")
             name = component.get("name")
-            file_path = component.get("path")
+            file_path = component.get("path", name)  # Use `name` as fallback if `path` is None
 
             # Initialize metrics
             avg_cyclomatic = None
@@ -33,7 +33,7 @@ def generate_analytic_csv(json_path, csv_path):
             for measure in component.get("measures", []):
                 if measure["metric"] == "complexity":
                     avg_cyclomatic = int(measure["value"])
-                    max_cyclomatic = int(measure["value"])  # Assuming same value for simplicity
+                    max_cyclomatic = max_cyclomatic or int(measure["value"])  # Ensure max is captured if set
                 elif measure["metric"] == "ncloc":
                     count_line_code = int(measure["value"])
                 elif measure["metric"] == "comment_lines_density":
@@ -41,6 +41,7 @@ def generate_analytic_csv(json_path, csv_path):
                 elif measure["metric"] == "functions":
                     count_decl_function = int(measure["value"])
 
+            # Write to CSV
             writer.writerow([
                 kind, name, file_path, 
                 avg_cyclomatic, count_line_code, 
