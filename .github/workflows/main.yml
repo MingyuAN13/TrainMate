@@ -372,7 +372,8 @@ jobs:
 
       - name: Create Kind Cluster
         run: |
-          kind create cluster --name cluster --config=.kubernetes/config.yaml
+          cd kubernetes
+          kind create cluster --name cluster --config=config.yaml
 
       - name: Set up Kubectl
         uses: azure/setup-kubectl@v4
