@@ -6,49 +6,8 @@ nodes:
       - containerPort: 30000
         hostPort: 30000
         protocol: TCP
-    kubeadmConfigPatches:
-      - |
-        kind: InitConfiguration
-        nodeRegistration:
-          kubeletExtraArgs:
-            node-status-update-frequency: "4s"
-      - |
-        kind: ClusterConfiguration
-        apiServer:
-          extraArgs:
-            "feature-gates": "IPv6DualStack=true"
-          extraVolumes:
-          - name: metrics-server
-            hostPath: /etc/kubernetes/pki/metrics-server
-            mountPath: /etc/kubernetes/pki/metrics-server
-        controllerManager:
-          extraArgs:
-            "node-monitor-grace-period": "16s"
-            "pod-eviction-timeout": "30s"
-            "feature-gates": "IPv6DualStack=true"
-        scheduler:
-          extraArgs:
-            "feature-gates": "IPv6DualStack=true"
   - role: worker
-    extraMounts:
-      - hostPath: /path/on/host
-        containerPath: /path/in/container
-    kubeadmConfigPatches:
-      - |
-        kind: JoinConfiguration
-        nodeRegistration:
-          kubeletExtraArgs:
-            "kube-reserved": "cpu=100m,memory=128Mi"
   - role: worker
-    extraMounts:
-      - hostPath: /path/on/host
-        containerPath: /path/in/container
-    kubeadmConfigPatches:
-      - |
-        kind: JoinConfiguration
-        nodeRegistration:
-          kubeletExtraArgs:
-            "kube-reserved": "cpu=100m,memory=128Mi"
 networking:
   apiServerAddress: "127.0.0.1"
   apiServerPort: 6443
