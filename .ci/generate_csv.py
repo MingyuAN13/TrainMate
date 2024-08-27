@@ -20,7 +20,7 @@ def generate_analytic_csv(json_path, csv_path):
         for component in components:
             kind = component.get("qualifier", "FIL")
             name = component.get("name")
-            file_path = component.get("path", name)  # Use `name` as fallback if `path` is None
+            file_path = component.get("path", name)
 
             # Initialize metrics
             avg_cyclomatic = None

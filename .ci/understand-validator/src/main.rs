@@ -492,20 +492,10 @@ fn join_violations(
     combined_violations
 }
 
-/// Reads the file and if the first line contains the string "validate-ignore" it will return true
-/// otherwise it will return false
-// fn is_ignored(file: &str) -> bool {
-//     let file = File::open(format!("../../{}", file)).unwrap();
-//     let mut reader = io::BufReader::new(file);
-//     let mut line = String::new();
-//     reader.read_line(&mut line).unwrap();
-//     line.contains("validate-ignore")
-// }
 fn is_ignored(file: &str) -> bool {
     let path = format!("../../{}", file);
     if fs::metadata(&path).map(|m| m.is_dir()).unwrap_or(false) {
-        // It's a directory, so we cannot open it as a file
-        return false;  // or handle it as needed
+        return false;  
     }
 
     let file = File::open(&path).unwrap();

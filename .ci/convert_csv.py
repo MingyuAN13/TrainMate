@@ -13,8 +13,8 @@ with open(input_file, 'r', newline='', encoding='utf-8') as csvfile:
     reader = csv.DictReader(csvfile)
 
     for row in reader:
-        from_file = row['DependencyPath']  # Adjust according to your actual column name
-        to_file = row['Identifiers']       # Adjust according to your actual column name
+        from_file = row['DependencyPath']  # Adjust according to actual column name
+        to_file = row['Identifiers']       # Adjust according to actual column name
 
         # Count the reference
         dependency_counts[(from_file, to_file)] += 1
