@@ -159,3 +159,7 @@ The following folders & files should not be reviewed:
 - rest\_api/Dockerfile.prod
 - rest\_api/requirements.txt
 - rest\_api/\_\_init\_\_.py
+
+
+INSERT INTO users_roles (user_id, role_id) VALUES (1, 5);
+surfdcache:/RawData/

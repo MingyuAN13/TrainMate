@@ -40,11 +40,12 @@ services:
     env_file:
       - .env
     ports:
-      - ${WEBDAV_PORT}:8081
+      - ${WEBDAV_PORT}:2880
     volumes:
       - ./webdav/webdav:/var/webdav/public
       - ./webdav/tokens:/etc/nginx/tokens
       - ./webdav/nginx.conf:/etc/nginx/nginx.conf
+    
   rest:
     restart: always
     build:
@@ -77,6 +78,7 @@ services:
       start_interval: 1s
     volumes:
       - ../rest_api:/app
+      - ./rclone.conf:/config/rclone/rclone.conf  # Mount rclone config
 
   frontend:
     restart: always

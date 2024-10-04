@@ -3,9 +3,14 @@ Manages the interactions with dCache
 """
 
 import os
+import logging
 import xml.etree.ElementTree as ET
 import requests
+from rclone_python import rclone
+from rclone_python.remote_types import RemoteTypes
+import subprocess
 
+logging.basicConfig(level=logging.DEBUG)
 
 class DCacheInteractor:
     """
@@ -19,6 +24,7 @@ class DCacheInteractor:
         host = os.environ.get("WEBDAV_HOST")
         port = os.environ.get("WEBDAV_PORT")
         self.url = f"{host}:{port}/"
+        self.config_path = '../environment/rclone.conf'
 
     def get_headers(self):
         """Creates a new header dictionary"""
@@ -149,7 +155,57 @@ class DCacheInteractor:
         headers["Depth"] = "0"
         response = requests.delete(self.url + path, headers=headers, timeout=5)
         return response
+    
+    def stream_upload_to_dcache(self, path, file):
+        """
+        Uploads a file to dCache using rclone-python without saving it to temporary storage.
 
+        :param file_data: The file data to be uploaded.
+        :return: Response dict with status or error message.
+        """
+        try:
+            logging.debug(f"Streaming file to dCache root using rclone-python")
+
+            # Use rclone-python to upload the file using the rcat command to the root (surfdcache:/)
+            result = rclone.copy(path, f"surfdcache:/")
+            
+            # Check if rclone succeeded
+            if result['code'] == 0:
+                logging.debug("File uploaded successfully via rclone")
+                return {"status": "success", "message": "File uploaded successfully"}
+            else:
+                logging.error(f"rclone failed: {result['error']}")
+                return {"status": "error", "message": f"rclone failed: {result['error']}"}
+
+        except Exception as e:
+            logging.error(f"Error in streaming upload: {str(e)}")
+            return {"status": "error", "message": f"Error during upload: {str(e)}"}
+    
+    def upload_to_dcache(self, save_path, target_path):
+        """
+        Uploads a file to dCache using rclone-python without saving it to temporary storage.
+
+        :param file_data: The file data to be uploaded.
+        :return: Response dict with status or error message.
+        """
+        try:
+            logging.debug(f"Streaming file to dCache root using rclone-python")
+
+            # Use rclone-python to upload the file using the rcat command to the root (surfdcache:/)
+            result = rclone.copy(save_path, target_path)
+            
+            # Check if rclone succeeded
+            if result['code'] == 0:
+                logging.debug("File uploaded successfully via rclone")
+                return {"status": "success", "message": "File uploaded successfully"}
+            else:
+                logging.error(f"rclone failed: {result['error']}")
+                return {"status": "error", "message": f"rclone failed: {result['error']}"}
+
+        except Exception as e:
+            logging.error(f"Error in streaming upload: {str(e)}")
+            return {"status": "error", "message": f"Error during upload: {str(e)}"}
+        
     def upload_file(self, path, file):
         """
         Uploads a file to dCache
@@ -158,11 +214,34 @@ class DCacheInteractor:
         :param file:    The file to upload
         :return:        The response from dCache
         """
-        # make a PUT request to upload a file to dcache
-        resp = requests.put(
-            self.url + path, data=file.read(), headers=self.get_headers(), timeout=5
-        )
-        return resp
+        try:
+            logging.debug("interact begin")  # Log at the start of the method
+            full_url = f"{self.url.rstrip('/')}/{path.lstrip('/')}"
+            logging.debug(f"Uploading to URL: {full_url}")  # Log the URL being used
+
+            # Stream the file to dCache
+            logging.debug(f"Sending PUT request to {full_url}")
+            response = requests.put(full_url, data=file, headers=self.get_headers(), timeout=60)
+
+            # Log the response
+            logging.debug(f"Response status: {response.status_code}")
+            if response.status_code not in [200, 201]:
+                logging.error(f"Failed to upload file: {response.status_code} - {response.text}")
+                raise Exception(f"Upload failed: {response.status_code} {response.text}")
+
+            logging.debug("interact done")  # Log successful completion
+            return response
+
+        except Exception as e:
+            logging.error(f"Error in upload_file: {e}")  # Log the exception
+            raise e
+        # print("interact begin")
+        # # make a PUT request to upload a file to dcache
+        # resp = requests.put(
+        #     self.url + path, data=file.read(), headers=self.get_headers(), timeout=5
+        # )
+        # print("interact done")
+        # return resp
 
     def copy_or_move(self, initial_path, target_path, command="COPY"):
         """

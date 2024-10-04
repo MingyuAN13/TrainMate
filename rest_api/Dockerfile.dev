@@ -8,10 +8,18 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     libhdf5-dev \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
+    && rm -rf /var/lib/apt/lists/* 
+    
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade  -r requirements.txt
+
+# Install rclone-python
+RUN curl https://rclone.org/install.sh | bash
+
+# Optional: Create a directory for the rclone config
+RUN mkdir -p /root/.config/rclone/
+
+COPY rclone.conf /root/.config/rclone/rclone.conf
 
 COPY . .
 

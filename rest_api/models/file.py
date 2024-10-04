@@ -10,7 +10,7 @@ class File(db.Model):
     __tablename__ = "files_table"
 
     id = db.Column(db.Integer, primary_key=True, unique=True, autoincrement=True)
-    # path to file as file/path/filename.ext
+    # relative path to file as file/path/filename.ext
     index = db.Column(db.String(300), nullable=False, unique=True)
     # name of the file viewable by user
     tags = db.relationship("Tag", secondary=files_tags_table, back_populates="files")

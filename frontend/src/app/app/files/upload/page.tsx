@@ -33,6 +33,7 @@ export interface ConOption {
 export interface FileKey {
     path: string;
     file: File;
+    address: string;
 }
 
 /**
@@ -62,6 +63,8 @@ export default function UploadPage() {
     const [selectedOption, setSelectedOption] = useState<string>("none");
     // File entries that should be displayed to be uploaded
     const [entriesToDisplay, setEntriesToDisplay] = useState<FileDisplay[]>([]);
+    // The address that the file should be uploaded to
+    const [uploadAddress, setUploadAddress] = useState<string>("");
     // Whether an upload process has started
     const [isUploading, setIsUploading] = useState(false);
     const router = useRouter();
@@ -75,6 +78,7 @@ export default function UploadPage() {
         // Set the displayed items
         selectedEntries.forEach((entry) => {
             console.log(entry);
+            entry.address = uploadAddress;
             const path = entry.path;
             if (path.includes("/")) {
                 const dirName = path.substring(0, path.indexOf("/") + 1);
@@ -86,7 +90,7 @@ export default function UploadPage() {
             }
         });
         setEntriesToDisplay(display);
-    }, [selectedEntries]);
+    }, [selectedEntries, uploadAddress]);
 
     useEffect(() => {
         // When all entries have been uploaded
@@ -100,7 +104,7 @@ export default function UploadPage() {
         }
     }, [entriesToDisplay, isUploading, router]);
 
-    // Handle the file upload process
+    // Handle the file upload process with chunked upload
     const handleUpload = async () => {
         // Get the user id of the current user
         const user = await fetchCurrentUser();
@@ -110,7 +114,10 @@ export default function UploadPage() {
         setIsUploading(true);
         // Create the form data to be sent to the server
         const formData = new FormData();
-        selectedEntries.forEach((entry) => formData.append(entry.path, entry.file));
+        selectedEntries.forEach((entry) => {
+            formData.append(entry.path, entry.file);
+            formData.append(`${entry.path}_address`, entry.address);  
+    });
         selectedCustomTags.concat(selectedUserTags).forEach((tag) => formData.append("tags[]", tag.id));
         console.log("FORM DATA");
         console.log(selectedCustomTags.concat(selectedUserTags));
@@ -146,6 +153,18 @@ export default function UploadPage() {
                     selectedEntries={selectedEntries}
                     removeSelectedEntries={(entry) => removeSelectedEntries(setSelectedEntries, entry)}
                 />
+                <div className="flex flex-col w-full">
+                {/* The address component*/}
+                <label htmlFor="upload-address" className="text-md font-semibold mb-2">Upload Address:</label>
+                <input
+                    id="upload-address"
+                    type="text"
+                    value={uploadAddress}
+                    onChange={(e) => setUploadAddress(e.target.value)}  // 更新状态
+                    className="border border-gray-300 rounded p-2 w-full"  // 宽度设为100%
+                    placeholder="/"
+                />
+            </div>
                 <div className="flex flex-row gap-5 h-[300px]">
                     {/* The tag selection component created by Ilse */}
                     <div className="basis-1/3 flex flex-col">
